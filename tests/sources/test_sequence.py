@@ -4,12 +4,7 @@ import itertools
 
 import pytest
 
-from cpds import CheckpointableDataset, Sample
-from cpds.testing import generate_example_sequence
-
-
-def generate_example_sequence(n_samples: int = 20) -> list[Sample]:
-    return [{"id": i} for i in range(n_samples)]
+from cpds import CheckpointableDataset, Sample, testing
 
 
 def key_fn(sample: Sample) -> int:
@@ -18,7 +13,7 @@ def key_fn(sample: Sample) -> int:
 
 
 def test_sequence_dataset_construction() -> None:
-    samples_original = generate_example_sequence()
+    samples_original = testing.generate_example_sequence()
     dataset = CheckpointableDataset.from_sequence(samples_original)
     samples_generated = list(dataset)
 
@@ -27,7 +22,7 @@ def test_sequence_dataset_construction() -> None:
 
 
 def test_sequence_dataset_shuffle() -> None:
-    samples_original = generate_example_sequence()
+    samples_original = testing.generate_example_sequence()
     dataset = CheckpointableDataset.from_sequence(samples_original, shuffle=True)
     samples_generated = list(dataset)
 
@@ -41,7 +36,7 @@ def test_sequence_dataset_shuffle() -> None:
 def test_sequence_dataset_repeat() -> None:
     n_samples = 5
     n_epochs = 4
-    samples_original = generate_example_sequence(n_samples=n_samples)
+    samples_original = testing.generate_example_sequence(n_samples=n_samples)
     dataset = CheckpointableDataset.from_sequence(samples_original, repeat=True)
     samples_generated = list(itertools.islice(dataset, n_samples * n_epochs))
 
@@ -52,7 +47,7 @@ def test_sequence_dataset_repeat() -> None:
 def test_sequence_dataset_shuffle_repeat() -> None:
     n_samples = 5
     n_epochs = 4
-    samples_original = generate_example_sequence(n_samples=n_samples)
+    samples_original = testing.generate_example_sequence(n_samples=n_samples)
     dataset = CheckpointableDataset.from_sequence(samples_original, repeat=True, shuffle=True)
     samples_generated = list(itertools.islice(dataset, n_samples * n_epochs))
 
@@ -80,20 +75,10 @@ def test_sequence_dataset_shuffle_repeat() -> None:
 def test_sequence_dataset_resumption(
     n_samples: int, ckpt_index: int, shuffle: bool, repeat: bool
 ) -> None:
-    n_subsequent_samples = 3  # How many samples to check after resumption
-    samples = generate_example_sequence(n_samples=n_samples)
-    dataset = CheckpointableDataset.from_sequence(samples, repeat=repeat, shuffle=shuffle)
+    samples = testing.generate_example_sequence(n_samples=n_samples)
 
-    # Consuming the first `ckpt_index` samples and get the state dict
-    it = iter(dataset)
-    for _ in range(ckpt_index):
-        next(it)
-    state_dict = it.state_dict()
-    subsequent_samples_original = list(itertools.islice(it, n_subsequent_samples))
-
-    # Recreate the dataset and resume from the state dict
-    dataset = CheckpointableDataset.from_sequence(samples, repeat=repeat, shuffle=shuffle)
-    it = dataset.iter(state_dict=state_dict)
-    subsequent_samples_resumed = list(itertools.islice(it, n_subsequent_samples))
-
-    assert subsequent_samples_resumed == subsequent_samples_original
+    testing.check_resumption(
+        CheckpointableDataset.from_sequence(samples, repeat=repeat, shuffle=shuffle),
+        CheckpointableDataset.from_sequence(samples, repeat=repeat, shuffle=shuffle),
+        ckpt_index,
+    )

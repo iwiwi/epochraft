@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import abc
-from typing import Any, Optional, Sequence
+from typing import Any, Callable, Optional, Sequence
 
 Sample = dict[str, Any]
 StateDict = dict[str, Any]
@@ -40,3 +40,21 @@ class CheckpointableDataset(abc.ABC):
         return SequenceDataset(
             sequence=sequence, repeat=repeat, shuffle=shuffle, shuffle_seed=shuffle_seed
         )
+
+    def filter_map(self, fn: Callable[[Sample], Optional[Sample]]) -> CheckpointableDataset:
+        from .transforms import FilterMap
+
+        return FilterMap(self, fn)
+
+    def map(self, fn: Callable[[Sample], Sample]) -> CheckpointableDataset:
+        from .transforms import FilterMap
+
+        return FilterMap(self, fn)
+
+    def filter(self, fn: Callable[[Sample], bool]) -> CheckpointableDataset:
+        from .transforms import FilterMap
+
+        def _fn(sample: Sample) -> Optional[Sample]:
+            return sample if fn(sample) else None
+
+        return FilterMap(self, _fn)
