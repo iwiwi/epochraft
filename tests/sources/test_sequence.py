@@ -7,11 +7,6 @@ import pytest
 from cpds import CheckpointableDataset, Sample, testing
 
 
-def key_fn(sample: Sample) -> int:
-    """Key function for sorting samples by their id"""
-    return sample["id"]  # type: ignore
-
-
 def test_sequence_dataset_construction() -> None:
     samples_original = testing.generate_example_sequence()
     dataset = CheckpointableDataset.from_sequence(samples_original)
@@ -30,7 +25,9 @@ def test_sequence_dataset_shuffle() -> None:
     assert samples_generated != samples_original
 
     # However, the set of the samples should be the same
-    assert sorted(samples_generated, key=key_fn) == sorted(samples_original, key=key_fn)
+    assert sorted(samples_generated, key=testing.sort_key_fn) == sorted(
+        samples_original, key=testing.sort_key_fn
+    )
 
 
 def test_sequence_dataset_repeat() -> None:
@@ -55,7 +52,9 @@ def test_sequence_dataset_shuffle_repeat() -> None:
     assert samples_generated != samples_original * n_epochs
 
     # However, the set of the samples should be the same
-    assert sorted(samples_generated, key=key_fn) == sorted(samples_original * n_epochs, key=key_fn)
+    assert sorted(samples_generated, key=testing.sort_key_fn) == sorted(
+        samples_original * n_epochs, key=testing.sort_key_fn
+    )
 
 
 @pytest.mark.parametrize(

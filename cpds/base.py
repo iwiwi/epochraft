@@ -1,7 +1,11 @@
 from __future__ import annotations
 
 import abc
-from typing import Any, Callable, Optional, Sequence
+from typing import TYPE_CHECKING, Any, Callable, Optional, Sequence
+
+if TYPE_CHECKING:
+    import streaming
+
 
 Sample = dict[str, Any]
 StateDict = dict[str, Any]
@@ -40,6 +44,15 @@ class CheckpointableDataset(abc.ABC):
         return SequenceDataset(
             sequence=sequence, repeat=repeat, shuffle=shuffle, shuffle_seed=shuffle_seed
         )
+
+    @staticmethod
+    def from_mosaicml(
+        mosaicml_dataset: streaming.StreamingDataset,
+        repeat: bool = False,
+    ) -> CheckpointableDataset:
+        from .sources import MosaicmlDataset
+
+        return MosaicmlDataset(mosaicml_dataset, repeat=repeat)
 
     def filter_map(self, fn: Callable[[Sample], Optional[Sample]]) -> CheckpointableDataset:
         from .transforms import FilterMap
