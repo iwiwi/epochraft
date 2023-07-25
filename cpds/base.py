@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import abc
-from typing import Any, Optional
+from typing import Any, Optional, Sequence
 
 Sample = dict[str, Any]
 StateDict = dict[str, Any]
@@ -27,3 +27,16 @@ class CheckpointableDataset(abc.ABC):
     @abc.abstractmethod
     def iter(self, state_dict: Optional[StateDict] = None) -> CheckpointableIterator:
         raise NotImplementedError()
+
+    @staticmethod
+    def from_sequence(
+        sequence: Sequence[Sample],
+        repeat: bool = False,
+        shuffle: bool = False,
+        shuffle_seed: int = 42,
+    ) -> CheckpointableDataset:
+        from .sources import SequenceDataset
+
+        return SequenceDataset(
+            sequence=sequence, repeat=repeat, shuffle=shuffle, shuffle_seed=shuffle_seed
+        )

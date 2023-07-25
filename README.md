@@ -4,6 +4,6 @@
 ## Development
 
 ```
-mypy cpds; flake8 cpds; black cpds; isort cpds
-pytest .
+mypy cpds tests; flake8 cpds tests; black cpds tests; isort cpds tests;
+PYTHONPATH=. pytest .
 ```
