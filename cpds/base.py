@@ -1,14 +1,21 @@
 from __future__ import annotations
 
 import abc
-from typing import TYPE_CHECKING, Any, Callable, Optional, Sequence
+from typing import TYPE_CHECKING, Any, Callable, Optional, Sequence, Union
+
+import numpy as np
+import torch
 
 if TYPE_CHECKING:
     import streaming
+    from transformers import PreTrainedTokenizer, PreTrainedTokenizerFast
+
+    Tokenizer = Union[PreTrainedTokenizer, PreTrainedTokenizerFast]
 
 
 Sample = dict[str, Any]
 StateDict = dict[str, Any]
+TokenArray = Union[list[int], np.ndarray, torch.Tensor]
 
 
 class CheckpointableIterator(abc.ABC):
@@ -71,3 +78,20 @@ class CheckpointableDataset(abc.ABC):
             return sample if fn(sample) else None
 
         return FilterMap(self, _fn)
+
+    def concat_chunk(
+        self,
+        chunk_length: int,
+        column: str = "input_ids",
+        bos_tokens: Optional[TokenArray] = None,
+        eos_tokens: Optional[TokenArray] = None,
+    ) -> CheckpointableDataset:
+        from .transforms import ConcatChunk
+
+        return ConcatChunk(
+            self,
+            chunk_length=chunk_length,
+            column=column,
+            bos_tokens=bos_tokens,
+            eos_tokens=eos_tokens,
+        )

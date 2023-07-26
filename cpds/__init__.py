@@ -1,4 +1,4 @@
 from .base import (CheckpointableDataset, CheckpointableIterator, Sample,
-                   StateDict)
+                   StateDict, TokenArray)
 
-__all__ = ["CheckpointableDataset", "CheckpointableIterator", "Sample", "StateDict"]
+__all__ = ["CheckpointableDataset", "CheckpointableIterator", "Sample", "StateDict", "TokenArray"]

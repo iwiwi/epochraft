@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Optional
 
-from ..base import CheckpointableDataset, CheckpointableIterator, Sample, StateDict
+from ..base import (CheckpointableDataset, CheckpointableIterator, Sample,
+                    StateDict)
 
 if TYPE_CHECKING:
     import streaming
