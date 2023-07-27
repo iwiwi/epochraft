@@ -79,6 +79,19 @@ class CheckpointableDataset(abc.ABC):
 
         return FilterMap(self, _fn)
 
+    def enumerate(self, count_column: str = "step") -> CheckpointableDataset:
+        from .transforms import Count
+
+        return Count(self, count_column=count_column)
+
+    def take(
+        self,
+        max_count: int,
+    ) -> CheckpointableDataset:
+        from .transforms import Count
+
+        return Count(self, max_count=max_count)
+
     def concat_chunk(
         self,
         chunk_length: int,

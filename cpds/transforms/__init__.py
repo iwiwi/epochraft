@@ -1,4 +1,13 @@
 from .concat_chunk import ConcatChunk, ConcatChunkIterator
+from .count import Count, CountIterator
 from .filter_map import FilterMap, FilterMapFn, FilterMapIterator
 
-__all__ = ["FilterMap", "FilterMapIterator", "FilterMapFn", "ConcatChunk", "ConcatChunkIterator"]
+__all__ = [
+    "FilterMap",
+    "FilterMapIterator",
+    "FilterMapFn",
+    "ConcatChunk",
+    "ConcatChunkIterator",
+    "Count",
+    "CountIterator",
+]
