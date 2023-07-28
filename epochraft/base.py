@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import abc
-from typing import TYPE_CHECKING, Any, Callable, Optional, Sequence, Union
+from typing import (TYPE_CHECKING, Any, Callable, Dict, List, Optional,
+                    Sequence, Union)
 
 import numpy as np
 import torch
@@ -13,10 +14,10 @@ if TYPE_CHECKING:
     Tokenizer = Union[PreTrainedTokenizer, PreTrainedTokenizerFast]
 
 
-Sample = dict[str, Any]
-StateDict = dict[str, Any]
-TokenArray = Union[list[int], np.ndarray, torch.Tensor]
-CollateFnType = Callable[[list[Sample]], Sample]
+Sample = Dict[str, Any]
+StateDict = Dict[str, Any]
+TokenArray = Union[List[int], np.ndarray, torch.Tensor]
+CollateFnType = Callable[[List[Sample]], Sample]
 
 
 class CheckpointableIterator(abc.ABC):
