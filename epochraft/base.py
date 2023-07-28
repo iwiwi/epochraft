@@ -16,6 +16,7 @@ if TYPE_CHECKING:
 Sample = dict[str, Any]
 StateDict = dict[str, Any]
 TokenArray = Union[list[int], np.ndarray, torch.Tensor]
+CollateFnType = Callable[[list[Sample]], Sample]
 
 
 class CheckpointableIterator(abc.ABC):
@@ -91,6 +92,16 @@ class CheckpointableDataset(abc.ABC):
         from .transforms import Count
 
         return Count(self, max_count=max_count)
+
+    def batch(
+        self,
+        batch_size: int,
+        collate_fn: CollateFnType = torch.utils.data.default_collate,
+        drop_last: bool = False,
+    ) -> CheckpointableDataset:
+        from .transforms import Batch
+
+        return Batch(self, batch_size=batch_size, collate_fn=collate_fn, drop_last=drop_last)
 
     def concat_chunk(
         self,
