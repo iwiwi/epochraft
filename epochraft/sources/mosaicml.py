@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+import warnings
 import weakref
 from typing import TYPE_CHECKING, Any, Optional
-import warnings
 
 from ..base import (CheckpointableDataset, CheckpointableIterator, Sample,
                     StateDict)
@@ -49,7 +49,6 @@ class MosaicmlDataset(CheckpointableDataset):
 
         self.iter_called = False
         self.iters = weakref.WeakSet()
-
 
     def iter(self, state_dict: Optional[dict[str, Any]] = None) -> CheckpointableIterator:
         if self.iters:
