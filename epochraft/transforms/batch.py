@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from typing import Optional
 
-from ..base import CheckpointableDataset, CheckpointableIterator, CollateFnType, Sample, StateDict
+from ..base import (CheckpointableDataset, CheckpointableIterator,
+                    CollateFnType, Sample, StateDict)
 
 
 class BatchIterator(CheckpointableIterator):
