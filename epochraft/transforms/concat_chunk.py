@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any, Optional, Union
 
 import numpy as np
 import torch
@@ -9,7 +9,12 @@ from ..base import (CheckpointableDataset, CheckpointableIterator, Sample,
                     StateDict, TokenArray)
 
 
-def tensor_from_token_array(data: TokenArray) -> torch.Tensor:
+def tensor_from_token_array(data: Optional[Union[int, TokenArray]]) -> torch.Tensor:
+    if data is None:
+        data = []
+    if isinstance(data, int):
+        data = [data]
+
     if isinstance(data, torch.Tensor):
         tensor = data
     elif isinstance(data, np.ndarray):
@@ -68,14 +73,14 @@ class ConcatChunk(CheckpointableDataset):
         source: CheckpointableDataset,
         chunk_length: int,
         column: str,
-        bos_tokens: Optional[TokenArray],
-        eos_tokens: Optional[TokenArray],
+        bos_tokens: Optional[Union[int, TokenArray]],
+        eos_tokens: Optional[Union[int, TokenArray]],
     ) -> None:
         self.source = source
         self.column = column
         self.chunk_length = chunk_length
-        self.bos_tokens = tensor_from_token_array(bos_tokens or [])
-        self.eos_tokens = tensor_from_token_array(eos_tokens or [])
+        self.bos_tokens = tensor_from_token_array(bos_tokens)
+        self.eos_tokens = tensor_from_token_array(eos_tokens)
 
     def iter(self, state_dict: Optional[dict[str, Any]] = None) -> CheckpointableIterator:
         if state_dict:
