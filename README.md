@@ -1,9 +1,9 @@
-# CPDS: Checkpointable Datasets for Foundation Model Training
+# Epochraft: Supercharge Your LLM Training with Checkpointable Data Loading
 
 
 ## Development
 
 ```
-mypy cpds tests; flake8 cpds tests; black cpds tests; isort cpds tests;
+mypy epochraft tests; flake8 epochraft tests; black epochraft tests; isort epochraft tests;
 PYTHONPATH=. pytest .
 ```

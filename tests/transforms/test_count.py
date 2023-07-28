@@ -1,4 +1,4 @@
-from cpds import CheckpointableDataset, testing
+from epochraft import CheckpointableDataset, testing
 
 
 def test_enumerate() -> None:

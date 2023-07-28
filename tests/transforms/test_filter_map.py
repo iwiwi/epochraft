@@ -1,6 +1,6 @@
 from typing import Optional
 
-from cpds import CheckpointableDataset, Sample, testing
+from epochraft import CheckpointableDataset, Sample, testing
 
 
 def test_map() -> None:

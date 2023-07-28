@@ -4,7 +4,7 @@ import itertools
 
 import pytest
 
-from cpds import CheckpointableDataset, testing
+from epochraft import CheckpointableDataset, testing
 
 
 def test_sequence_dataset_construction() -> None:

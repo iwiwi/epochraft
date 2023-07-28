@@ -2,8 +2,8 @@ import numpy as np
 import pytest
 import torch
 
-from cpds import CheckpointableDataset, TokenArray, testing
-from cpds.transforms.concat_chunk import tensor_from_token_array
+from epochraft import CheckpointableDataset, TokenArray, testing
+from epochraft.transforms.concat_chunk import tensor_from_token_array
 
 
 @pytest.mark.parametrize(

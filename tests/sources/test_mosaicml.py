@@ -7,7 +7,7 @@ from typing import Generator
 import pytest
 import streaming
 
-from cpds import CheckpointableDataset, Sample, testing
+from epochraft import CheckpointableDataset, Sample, testing
 
 
 @pytest.fixture
