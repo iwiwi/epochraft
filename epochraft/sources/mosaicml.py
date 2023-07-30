@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import warnings
+import weakref
 from typing import TYPE_CHECKING, Any, Optional
 
 from ..base import (CheckpointableDataset, CheckpointableIterator, Sample,
@@ -44,9 +46,21 @@ class MosaicmlDataset(CheckpointableDataset):
     def __init__(self, source: streaming.StreamingDataset, repeat: bool) -> None:
         self.source = source
         self.repeat = repeat
+
         self.iter_called = False
+        self.iters = weakref.WeakSet()
 
     def iter(self, state_dict: Optional[dict[str, Any]] = None) -> CheckpointableIterator:
+        if self.iters:
+            msg = (
+                "The existing MosaicmlIterator for this MosaicmlDataset is still alive. If you're "
+                "trying to handle multiple MosaicmlIterators for a single MosaicmlDataset, there "
+                "could be unintended behavior. This is because, unfortunately, "
+                "the StreamingDataset in MosaicML is somewhat stateful, and the Iterators may "
+                "affect each other's behavior."
+            )
+            warnings.warn(msg)
+
         if state_dict:
             if self.iter_called:
                 msg = (
@@ -59,7 +73,10 @@ class MosaicmlDataset(CheckpointableDataset):
             self.source.load_state_dict(state_dict["dataset"])
             index = state_dict["index"]
         else:
+            self.source.next_epoch = 0
             index = 0
 
         self.iter_called = True
-        return MosaicmlIterator(self, start_index=index)
+        iterator = MosaicmlIterator(self, start_index=index)
+        self.iters.add(iterator)
+        return iterator

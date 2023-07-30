@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Any, Callable, Optional
 
 from ..base import (CheckpointableDataset, CheckpointableIterator, Sample,
