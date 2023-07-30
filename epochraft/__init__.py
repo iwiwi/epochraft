@@ -1,6 +1,7 @@
-from .base import (CheckpointableDataset, CheckpointableIterator, Sample,
-                   StateDict, TokenArray)
+from .base import CheckpointableDataset, CheckpointableIterator, Sample, StateDict, TokenArray
 from .transforms.interleave import interleave
+from .version import __version__
+
 
 __all__ = [
     "CheckpointableDataset",
@@ -9,4 +10,5 @@ __all__ = [
     "StateDict",
     "TokenArray",
     "interleave",
+    "__version__",
 ]
