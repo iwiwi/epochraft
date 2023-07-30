@@ -54,7 +54,9 @@ def test_filter_map_checkpointing() -> None:
             return None
 
     samples = testing.generate_example_sequence()
-    dataset = CheckpointableDataset.from_sequence(samples, repeat=True, shuffle=True).filter_map(fn)
+    dataset = CheckpointableDataset.from_sequence(samples, repeat=True, shuffle=True).filter_map(
+        fn
+    )
 
     testing.check_resumption(dataset, dataset, 0)
     testing.check_resumption(dataset, dataset, 1)

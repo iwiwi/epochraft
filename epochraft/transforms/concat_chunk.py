@@ -5,8 +5,7 @@ from typing import Any, Optional, Union
 import numpy as np
 import torch
 
-from ..base import (CheckpointableDataset, CheckpointableIterator, Sample,
-                    StateDict, TokenArray)
+from ..base import CheckpointableDataset, CheckpointableIterator, Sample, StateDict, TokenArray
 
 
 def tensor_from_token_array(data: Optional[Union[int, TokenArray]]) -> torch.Tensor:

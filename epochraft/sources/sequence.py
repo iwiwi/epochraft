@@ -1,8 +1,7 @@
 import random
 from typing import Optional, Sequence
 
-from ..base import (CheckpointableDataset, CheckpointableIterator, Sample,
-                    StateDict)
+from ..base import CheckpointableDataset, CheckpointableIterator, Sample, StateDict
 
 
 class SequenceIterator(CheckpointableIterator):

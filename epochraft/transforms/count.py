@@ -2,8 +2,7 @@ from __future__ import annotations
 
 from typing import Optional
 
-from ..base import (CheckpointableDataset, CheckpointableIterator, Sample,
-                    StateDict)
+from ..base import CheckpointableDataset, CheckpointableIterator, Sample, StateDict
 
 
 class CountIterator(CheckpointableIterator):
