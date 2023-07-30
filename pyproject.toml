@@ -1,5 +1,80 @@
+[project]
+name = "epochraft"
+description = "Supercharge Your LLM Training with Checkpointable Data Loading"
+readme = "README.md"
+license = {file = "LICENSE"}
+authors = [
+  {name = "Takuya Akiba"},
+  {email = "takuya.akiba@stability.ai"}
+]
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Mathematics",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+requires-python = ">=3.8"
+dependencies = [
+  "torch",
+  "numpy",
+]
+dynamic = ["version"]
+
+[project.optional-dependencies]
+development = [
+    "black",
+    "flake8",
+    "isort",
+    "mypy",
+    "pytest",
+    "mosaicml-streaming",
+]
+
+[project.urls]
+repository = "https://github.com/iwiwi/epochraft"
+
+[tool.setuptools.packages.find]
+include = ["epochraft*"]
+
+[tool.setuptools.dynamic]
+version = {attr = "epochraft.version.__version__"}
+
 [tool.black]
-line-length = 100
+line-length = 99
+target-version = ['py38']
+exclude = '''
+/(
+    \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.venv
+  | venv
+  | _build
+  | buck-out
+  | build
+  | dist
+  | docs
+)/
+'''
+
+[tool.isort]
+profile = 'black'
+src_paths = ['epochraft', 'tests']
+line_length = 99
+lines_after_imports = 2
 
 [tool.mypy]
 python_version = "3.10"
@@ -11,3 +86,4 @@ warn_redundant_casts = true
 warn_unused_ignores = true
 warn_unreachable = true
 disallow_any_generics = false
+exclude = ".venv|venv|build|docs|tutorial"
