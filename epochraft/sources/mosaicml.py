@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Any, Optional
 
 from ..base import CheckpointableDataset, CheckpointableIterator, Sample, StateDict
 
+
 if TYPE_CHECKING:
     import streaming
 
@@ -47,7 +48,7 @@ class MosaicmlDataset(CheckpointableDataset):
         self.repeat = repeat
 
         self.iter_called = False
-        self.iters = weakref.WeakSet()
+        self.iters: weakref.WeakSet[MosaicmlIterator] = weakref.WeakSet()
 
     def iter(self, state_dict: Optional[dict[str, Any]] = None) -> CheckpointableIterator:
         if self.iters:

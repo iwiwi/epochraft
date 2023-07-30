@@ -55,7 +55,7 @@ def test_mosaicml_dataset_repeat_shuffle(samples_and_path: tuple[list[Sample], s
     dataset = CheckpointableDataset.from_mosaicml(mosaicml_dataset, repeat=True)
 
     for _ in range(n_epochs):
-        samples_generated = itertools.islice(dataset, len(samples))
+        samples_generated = list(itertools.islice(dataset, len(samples)))
         assert samples != samples_generated
         assert samples == sorted(samples_generated, key=testing.sort_key_fn)
 
@@ -69,7 +69,7 @@ def test_mosaicml_dataset_resumption(
 ) -> None:
     _, mds_path = samples_and_path
 
-    def dataset_factory_fn():
+    def dataset_factory_fn() -> CheckpointableDataset:
         return CheckpointableDataset.from_mosaicml(
             streaming.StreamingDataset(local=mds_path, num_canonical_nodes=1, shuffle=False),
             repeat=True,
