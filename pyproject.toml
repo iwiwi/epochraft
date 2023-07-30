@@ -35,6 +35,7 @@ dynamic = ["version"]
 [project.optional-dependencies]
 development = [
     "black",
+    "blackdoc",
     "flake8",
     "isort",
     "mypy",
