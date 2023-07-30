@@ -4,6 +4,7 @@ from typing import Any, Callable, Optional
 
 from ..base import CheckpointableDataset, CheckpointableIterator, Sample, StateDict
 
+
 FilterMapFn = Callable[[Sample], Optional[Sample]]
 
 
