@@ -120,3 +120,14 @@ class CheckpointableDataset(abc.ABC):
             bos_tokens=bos_tokens,
             eos_tokens=eos_tokens,
         )
+
+    # TODO: use parallel map
+    # TODO: add more args
+    def tokenize(self, tokenizer: Tokenizer, column: str = "text") -> CheckpointableDataset:
+        from .transforms import FilterMap
+
+        def _fn(sample: Sample) -> Sample:
+            sample.update(tokenizer(sample[column]))
+            return sample
+
+        return FilterMap(self, _fn)
