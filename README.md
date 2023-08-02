@@ -9,6 +9,14 @@
 
 Supercharge your LLM training with checkpointable data loading.
 
+## Key Features
+
+* **Checkpointing** - Epochraft operates completely deterministically, and allows for a full restoration of state through checkpointing.
+* **Simple** - It's a minimally readable implementation that makes it easy for users to add sources and transforms.
+* **LLM-Ready** - It is equipped out of the box with features necessary for pre-training and SFT of LLMs.
+
+
+
 ## Development
 
 
