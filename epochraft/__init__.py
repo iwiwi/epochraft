@@ -6,8 +6,7 @@ from .base import (
     StateDict,
     TokenArray,
 )
-from .combinations import concat_datasets
-from .transforms.interleave import interleave
+from .combinations import concat_datasets, interleave_datasets
 from .version import __version__
 
 
@@ -17,7 +16,7 @@ __all__ = [
     "Sample",
     "StateDict",
     "TokenArray",
-    "interleave",
+    "interleave_datasets",
     "ParallelExecutorType",
     "concat_datasets",
     "__version__",
