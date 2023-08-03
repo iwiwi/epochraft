@@ -6,7 +6,9 @@ from ..base import CheckpointableDataset, CheckpointableIterator, Sample, StateD
 
 
 class CountIterator(CheckpointableIterator):
-    def __init__(self, dataset: Count, source: CheckpointableIterator, start_count: int) -> None:
+    def __init__(
+        self, dataset: CountDataset, source: CheckpointableIterator, start_count: int
+    ) -> None:
         self.count = start_count
         self.dataset = dataset
         self.source = source
@@ -31,7 +33,7 @@ class CountIterator(CheckpointableIterator):
         }
 
 
-class Count(CheckpointableDataset):
+class CountDataset(CheckpointableDataset):
     def __init__(
         self,
         source: CheckpointableDataset,

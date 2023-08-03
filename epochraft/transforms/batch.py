@@ -6,7 +6,7 @@ from ..base import CheckpointableDataset, CheckpointableIterator, CollateFn, Sam
 
 
 class BatchIterator(CheckpointableIterator):
-    def __init__(self, dataset: Batch, source: CheckpointableIterator) -> None:
+    def __init__(self, dataset: BatchDataset, source: CheckpointableIterator) -> None:
         self.dataset = dataset
         self.source = source
 
@@ -25,7 +25,7 @@ class BatchIterator(CheckpointableIterator):
         return self.source.state_dict()
 
 
-class Batch(CheckpointableDataset):
+class BatchDataset(CheckpointableDataset):
     def __init__(
         self,
         source: CheckpointableDataset,

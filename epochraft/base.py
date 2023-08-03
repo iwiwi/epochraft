@@ -67,22 +67,22 @@ class CheckpointableDataset(torch.utils.data.IterableDataset, abc.ABC):
         return MosaicmlDataset(mosaicml_dataset, repeat=repeat)
 
     def filter_map(self, fn: FilterMapFn) -> CheckpointableDataset:
-        from .transforms import FilterMap
+        from .transforms import FilterMapDataset
 
-        return FilterMap(self, fn)
+        return FilterMapDataset(self, fn)
 
     def map(self, fn: Callable[[Sample], Sample]) -> CheckpointableDataset:
-        from .transforms import FilterMap
+        from .transforms import FilterMapDataset
 
-        return FilterMap(self, fn)
+        return FilterMapDataset(self, fn)
 
     def filter(self, fn: Callable[[Sample], bool]) -> CheckpointableDataset:
-        from .transforms import FilterMap
+        from .transforms import FilterMapDataset
 
         def _fn(sample: Sample) -> Optional[Sample]:
             return sample if fn(sample) else None
 
-        return FilterMap(self, _fn)
+        return FilterMapDataset(self, _fn)
 
     def parallel_filter_map(
         self,
@@ -92,9 +92,9 @@ class CheckpointableDataset(torch.utils.data.IterableDataset, abc.ABC):
         ordered: bool = True,
         executor_type: ParallelExecutorType = "process",
     ) -> CheckpointableDataset:
-        from .transforms import ParallelFilterMap
+        from .transforms import ParallelFilterMapDataset
 
-        return ParallelFilterMap(
+        return ParallelFilterMapDataset(
             self,
             fn,
             max_workers=max_workers,
@@ -111,9 +111,9 @@ class CheckpointableDataset(torch.utils.data.IterableDataset, abc.ABC):
         ordered: bool = True,
         executor_type: ParallelExecutorType = "process",
     ) -> CheckpointableDataset:
-        from .transforms import ParallelFilterMap
+        from .transforms import ParallelFilterMapDataset
 
-        return ParallelFilterMap(
+        return ParallelFilterMapDataset(
             self,
             fn,
             max_workers=max_workers,
@@ -130,12 +130,12 @@ class CheckpointableDataset(torch.utils.data.IterableDataset, abc.ABC):
         ordered: bool = True,
         executor_type: ParallelExecutorType = "process",
     ) -> CheckpointableDataset:
-        from .transforms import ParallelFilterMap
+        from .transforms import ParallelFilterMapDataset
 
         def _fn(sample: Sample) -> Optional[Sample]:
             return sample if fn(sample) else None
 
-        return ParallelFilterMap(
+        return ParallelFilterMapDataset(
             self,
             _fn,
             max_workers=max_workers,
@@ -145,17 +145,17 @@ class CheckpointableDataset(torch.utils.data.IterableDataset, abc.ABC):
         )
 
     def enumerate(self, count_column: str = "step") -> CheckpointableDataset:
-        from .transforms import Count
+        from .transforms import CountDataset
 
-        return Count(self, count_column=count_column)
+        return CountDataset(self, count_column=count_column)
 
     def take(
         self,
         max_count: int,
     ) -> CheckpointableDataset:
-        from .transforms import Count
+        from .transforms import CountDataset
 
-        return Count(self, max_count=max_count)
+        return CountDataset(self, max_count=max_count)
 
     def batch(
         self,
@@ -163,9 +163,11 @@ class CheckpointableDataset(torch.utils.data.IterableDataset, abc.ABC):
         collate_fn: CollateFn = torch.utils.data.default_collate,
         drop_last: bool = False,
     ) -> CheckpointableDataset:
-        from .transforms import Batch
+        from .transforms import BatchDataset
 
-        return Batch(self, batch_size=batch_size, collate_fn=collate_fn, drop_last=drop_last)
+        return BatchDataset(
+            self, batch_size=batch_size, collate_fn=collate_fn, drop_last=drop_last
+        )
 
     def concat_chunk(
         self,
@@ -174,9 +176,9 @@ class CheckpointableDataset(torch.utils.data.IterableDataset, abc.ABC):
         bos_tokens: Optional[TokenArray] = None,
         eos_tokens: Optional[TokenArray] = None,
     ) -> CheckpointableDataset:
-        from .transforms import ConcatChunk
+        from .transforms import ConcatChunkDataset
 
-        return ConcatChunk(
+        return ConcatChunkDataset(
             self,
             chunk_length=chunk_length,
             column=column,

@@ -1,20 +1,20 @@
-from .batch import Batch, BatchIterator
-from .concat_chunk import ConcatChunk, ConcatChunkIterator
-from .count import Count, CountIterator
-from .filter_map import FilterMap, FilterMapIterator
-from .parallel_filter_map import ParallelFilterMap, ParallelFilterMapIterator
+from .batch import BatchDataset, BatchIterator
+from .concat_chunk import ConcatChunkDataset, ConcatChunkIterator
+from .count import CountDataset, CountIterator
+from .filter_map import FilterMapDataset, FilterMapIterator
+from .parallel_filter_map import ParallelFilterMapDataset, ParallelFilterMapIterator
 
 
 __all__ = [
-    "FilterMap",
+    "FilterMapDataset",
     "FilterMapIterator",
     "FilterMapFn",
-    "ConcatChunk",
+    "ConcatChunkDataset",
     "ConcatChunkIterator",
-    "Count",
+    "CountDataset",
     "CountIterator",
-    "Batch",
+    "BatchDataset",
     "BatchIterator",
-    "ParallelFilterMap",
+    "ParallelFilterMapDataset",
     "ParallelFilterMapIterator",
 ]

@@ -20,7 +20,7 @@ class FilterMapIterator(CheckpointableIterator):
         return self.source.state_dict()
 
 
-class FilterMap(CheckpointableDataset):
+class FilterMapDataset(CheckpointableDataset):
     def __init__(self, source: CheckpointableDataset, fn: FilterMapFn):
         self.source = source
         self.fn = fn

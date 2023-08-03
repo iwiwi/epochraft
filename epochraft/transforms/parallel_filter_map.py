@@ -106,7 +106,7 @@ class ParallelFilterMapIterator(CheckpointableIterator):
     def __init__(
         self,
         source: CheckpointableIterator,
-        dataset: ParallelFilterMap,
+        dataset: ParallelFilterMapDataset,
         unconsumed_outputs: list[Sample],
     ) -> None:
         self.source = source
@@ -177,7 +177,7 @@ def _get_default_max_workers() -> int:
     return max(n_cpus // local_world_size, 1)
 
 
-class ParallelFilterMap(CheckpointableDataset):
+class ParallelFilterMapDataset(CheckpointableDataset):
     def __init__(
         self,
         source: CheckpointableDataset,

@@ -41,7 +41,7 @@ def tensor_from_token_array(data: Optional[Union[int, TokenArray]]) -> torch.Ten
 class ConcatChunkIterator(CheckpointableIterator):
     def __init__(
         self,
-        dataset: ConcatChunk,
+        dataset: ConcatChunkDataset,
         source: CheckpointableIterator,
         buffer: Optional[torch.LongTensor],
     ) -> None:
@@ -74,7 +74,7 @@ class ConcatChunkIterator(CheckpointableIterator):
         }
 
 
-class ConcatChunk(CheckpointableDataset):
+class ConcatChunkDataset(CheckpointableDataset):
     def __init__(
         self,
         source: CheckpointableDataset,
