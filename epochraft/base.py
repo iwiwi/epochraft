@@ -2,7 +2,18 @@ from __future__ import annotations
 
 import abc
 import os
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Literal, Optional, Sequence, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Literal,
+    Optional,
+    Sequence,
+    Union,
+)
 
 import numpy as np
 import torch
@@ -56,6 +67,15 @@ class CheckpointableDataset(torch.utils.data.IterableDataset, abc.ABC):
         return SequenceDataset(
             sequence=sequence, repeat=repeat, shuffle=shuffle, shuffle_seed=shuffle_seed
         )
+
+    @staticmethod
+    def from_iterable(
+        iterable: Iterable[Sample],
+        repeat: bool = False,
+    ) -> CheckpointableDataset:
+        from .sources import IterableDataset
+
+        return IterableDataset(iterable, repeat=repeat)
 
     @staticmethod
     def from_mosaicml(

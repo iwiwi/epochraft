@@ -100,4 +100,6 @@ def check_resumption(
     it = resuming_dataset.iter(state_dict=state_dict)
     subsequent_samples_resumed = list(itertools.islice(it, n_subsequent_samples))
 
+    print(subsequent_samples_original)
+    print(subsequent_samples_resumed)
     assert_sample_lists_equal(subsequent_samples_original, subsequent_samples_resumed)
