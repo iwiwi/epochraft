@@ -41,6 +41,7 @@ development = [
     "mypy",
     "pytest",
     "mosaicml-streaming",
+    "transformers",
 ]
 
 [project.urls]

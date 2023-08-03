@@ -1,11 +1,8 @@
 from __future__ import annotations
 
-from typing import Any, Callable, Optional
+from typing import Any, Optional
 
-from ..base import CheckpointableDataset, CheckpointableIterator, Sample, StateDict
-
-
-FilterMapFn = Callable[[Sample], Optional[Sample]]
+from ..base import CheckpointableDataset, CheckpointableIterator, FilterMapFn, Sample, StateDict
 
 
 class FilterMapIterator(CheckpointableIterator):

@@ -26,7 +26,14 @@ def tensor_from_token_array(data: Optional[Union[int, TokenArray]]) -> torch.Ten
 
     if tensor.dtype != torch.long:
         raise ValueError(f"Expected long tensor, got {tensor.dtype}")
-    if tensor.dim() != 1:
+
+    if tensor.dim() == 2:
+        if tensor.shape[0] != 1:
+            raise ValueError(
+                "input_ids must be 1-dimensional tensor or 2-dimensional tensor with batch size 1"
+            )
+        tensor = tensor[0]
+    elif tensor.dim() != 1:
         raise ValueError("input_ids must be 1-dimensional tensor")
     return tensor
 
@@ -54,6 +61,7 @@ class ConcatChunkIterator(CheckpointableIterator):
                     self.dataset.eos_tokens,
                 ]
             )
+            print(tokens.shape, self.buffer.shape)
 
         y = self.buffer[: self.dataset.chunk_length]
         self.buffer = self.buffer[self.dataset.chunk_length :]

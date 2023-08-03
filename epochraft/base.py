@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import abc
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Sequence, Union
+import os
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Literal, Optional, Sequence, Union
 
 import numpy as np
 import torch
@@ -17,7 +18,9 @@ if TYPE_CHECKING:
 Sample = Dict[str, Any]
 StateDict = Dict[str, Any]
 TokenArray = Union[List[int], np.ndarray, torch.Tensor]
-CollateFnType = Callable[[List[Sample]], Sample]
+FilterMapFn = Callable[[Sample], Optional[Sample]]
+CollateFn = Callable[[List[Sample]], Sample]
+ParallelExecutorType = Literal["process", "thread"]
 
 
 class CheckpointableIterator(abc.ABC):
@@ -63,7 +66,7 @@ class CheckpointableDataset(abc.ABC):
 
         return MosaicmlDataset(mosaicml_dataset, repeat=repeat)
 
-    def filter_map(self, fn: Callable[[Sample], Optional[Sample]]) -> CheckpointableDataset:
+    def filter_map(self, fn: FilterMapFn) -> CheckpointableDataset:
         from .transforms import FilterMap
 
         return FilterMap(self, fn)
@@ -81,6 +84,66 @@ class CheckpointableDataset(abc.ABC):
 
         return FilterMap(self, _fn)
 
+    def parallel_filter_map(
+        self,
+        fn: FilterMapFn,
+        max_workers: Optional[int] = None,
+        prefetch_factor: int = 10,
+        ordered: bool = True,
+        executor_type: ParallelExecutorType = "process",
+    ) -> CheckpointableDataset:
+        from .transforms import ParallelFilterMap
+
+        return ParallelFilterMap(
+            self,
+            fn,
+            max_workers=max_workers,
+            prefetch_factor=prefetch_factor,
+            ordered=ordered,
+            executor_type=executor_type,
+        )
+
+    def parallel_map(
+        self,
+        fn: Callable[[Sample], Sample],
+        max_workers: Optional[int] = None,
+        prefetch_factor: int = 10,
+        ordered: bool = True,
+        executor_type: ParallelExecutorType = "process",
+    ) -> CheckpointableDataset:
+        from .transforms import ParallelFilterMap
+
+        return ParallelFilterMap(
+            self,
+            fn,
+            max_workers=max_workers,
+            prefetch_factor=prefetch_factor,
+            ordered=ordered,
+            executor_type=executor_type,
+        )
+
+    def parallel_filter(
+        self,
+        fn: Callable[[Sample], bool],
+        max_workers: Optional[int] = None,
+        prefetch_factor: int = 10,
+        ordered: bool = True,
+        executor_type: ParallelExecutorType = "process",
+    ) -> CheckpointableDataset:
+        from .transforms import ParallelFilterMap
+
+        def _fn(sample: Sample) -> Optional[Sample]:
+            return sample if fn(sample) else None
+
+        return ParallelFilterMap(
+            self,
+            _fn,
+            max_workers=max_workers,
+            prefetch_factor=prefetch_factor,
+            ordered=ordered,
+            executor_type=executor_type,
+        )
+
     def enumerate(self, count_column: str = "step") -> CheckpointableDataset:
         from .transforms import Count
 
@@ -97,7 +160,7 @@ class CheckpointableDataset(abc.ABC):
     def batch(
         self,
         batch_size: int,
-        collate_fn: CollateFnType = torch.utils.data.default_collate,
+        collate_fn: CollateFn = torch.utils.data.default_collate,
         drop_last: bool = False,
     ) -> CheckpointableDataset:
         from .transforms import Batch
@@ -121,13 +184,33 @@ class CheckpointableDataset(abc.ABC):
             eos_tokens=eos_tokens,
         )
 
-    # TODO: use parallel map
-    # TODO: add more args
-    def tokenize(self, tokenizer: Tokenizer, column: str = "text") -> CheckpointableDataset:
-        from .transforms import FilterMap
+    def tokenize(
+        self,
+        tokenizer: Tokenizer,
+        tokenizer_kwargs: Optional[Dict[str, Any]] = None,
+        target_column: str = "text",
+        parallel: bool = True,
+        max_workers: Optional[int] = None,
+        prefetch_factor: int = 10,
+        ordered: bool = True,
+        executor_type: ParallelExecutorType = "process",
+    ) -> CheckpointableDataset:
+        tokenizer_kwargs = tokenizer_kwargs or {}
 
         def _fn(sample: Sample) -> Sample:
-            sample.update(tokenizer(sample[column]))
+            sample.update(tokenizer(sample[target_column], **tokenizer_kwargs))
             return sample
 
-        return FilterMap(self, _fn)
+        if parallel:
+            # TODO: show some warning on this
+            os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
+            return self.parallel_map(
+                _fn,
+                max_workers=max_workers,
+                prefetch_factor=prefetch_factor,
+                ordered=ordered,
+                executor_type=executor_type,
+            )
+        else:
+            return self.map(_fn)
