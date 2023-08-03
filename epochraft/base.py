@@ -73,6 +73,17 @@ class CheckpointableDataset(torch.utils.data.IterableDataset, abc.ABC):
         iterable: Iterable[Sample],
         repeat: bool = False,
     ) -> CheckpointableDataset:
+        """
+        Create a CheckpointableDataset from an iterable.
+
+        This static method creates a new CheckpointableDataset instance from an iterable.
+        Each item in the iterable should be a `Sample` instance.
+
+        The iterable should be a 're-iterable' and 'deterministic', i.e., it should return a new
+        iterator each time `iter` is invoked and generate the same sequence of samples every time.
+        This allows the successful resumption.
+        """
+
         from .sources import IterableDataset
 
         return IterableDataset(iterable, repeat=repeat)

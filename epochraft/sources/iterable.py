@@ -1,5 +1,4 @@
-import random
-from typing import Iterable, Optional
+from typing import Iterable, Iterator, Optional
 
 from ..base import CheckpointableDataset, CheckpointableIterator, Sample, StateDict
 
@@ -10,7 +9,7 @@ class IterableIterator(CheckpointableIterator):
         self.index = start_index
         self.source_iter = self._initialize_source_iter(start_index)
 
-    def _initialize_source_iter(self, start_index: int) -> Iterable[Sample]:
+    def _initialize_source_iter(self, start_index: int) -> Iterator[Sample]:
         it = iter(self.dataset.iterable)
         index = 0
 

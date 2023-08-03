@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-import itertools
+from typing import Generator
 
 import pytest
 
-from epochraft import CheckpointableDataset, testing
+from epochraft import CheckpointableDataset, Sample, testing
 
 
 def test_iterable_dataset() -> None:
@@ -14,7 +14,8 @@ def test_iterable_dataset() -> None:
     dataset_iter = dataset.iter()
 
     # Extract the first 5 samples and check if they are as expected.
-    # If the `repeat` option is working, the samples should cycle back to the start after the end of the iterable.
+    # If the `repeat` option is working,
+    # the samples should cycle back to the start after the end of the iterable.
     for i in range(5):
         sample = next(dataset_iter)
         expected_sample = {"data": "dataset_1", "value": i % len(iterable)}
@@ -28,7 +29,8 @@ def test_iterable_dataset_no_repeat() -> None:
     dataset_iter = dataset.iter()
 
     # Extract the first 4 samples.
-    # Since `repeat` is False, a StopIteration exception should be raised after the end of the iterable.
+    # Since `repeat` is False, a StopIteration exception should be
+    # raised after the end of the iterable.
     samples = []
     with pytest.raises(StopIteration):
         for _ in range(4):
@@ -41,7 +43,7 @@ def test_iterable_dataset_no_repeat() -> None:
 
 def test_iterable_dataset_infinite() -> None:
     # Define an infinite generator.
-    def infinite_generator():
+    def infinite_generator() -> Generator[Sample, None, None]:
         i = 0
         while True:
             yield {"data": "dataset_1", "value": i}
