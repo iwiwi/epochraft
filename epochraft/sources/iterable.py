@@ -11,38 +11,13 @@ class IterableIterator(CheckpointableIterator):
 
     def _initialize_source_iter(self, start_index: int) -> Iterator[Sample]:
         it = iter(self.dataset.iterable)
-        index = 0
 
-        # 1st epoch
-        while index < start_index:
+        for _ in range(start_index):
             try:
                 next(it)
-                index += 1
-            except StopIteration:
-                if not self.dataset.repeat:
-                    raise ValueError(
-                        f"start_index larger than iterable length: {start_index} >= {index}"
-                    )
-                else:
-                    break
-        if index == start_index:
-            return it
-
-        # Skipping to the last epoch
-        epoch_size = index
-        while index + epoch_size < start_index:
-            index += epoch_size
-        it = iter(self.dataset.iterable)
-
-        # Last epoch
-        while index < start_index:
-            try:
-                next(it)
-                index += 1
             except StopIteration:
                 raise ValueError(
-                    "The length of source iterable changed while repeating, "
-                    "please make sure it is deterministic"
+                    f"start_index larger than iterable length: {start_index} >= {index}"
                 )
 
         return it
@@ -58,7 +33,7 @@ class IterableIterator(CheckpointableIterator):
 
             self.source_iter = iter(self.dataset.iterable)
             sample = next(self.source_iter)
-            self.index += 1
+            self.index = 1
             return sample
 
     def state_dict(self) -> StateDict:

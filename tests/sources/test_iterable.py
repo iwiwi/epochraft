@@ -61,12 +61,40 @@ def test_iterable_dataset_infinite() -> None:
     assert samples == expected_samples
 
 
-def test_iterable_dataset_resumption() -> None:
+def test_iterable_dataset_resumption_no_repeat() -> None:
+    iterable = [{"data": "dataset_1", "value": i} for i in range(3)]
+
+    dataset = CheckpointableDataset.from_iterable(iterable, repeat=False)
+
+    testing.check_resumption(dataset, dataset, 0)
+    testing.check_resumption(dataset, dataset, 1)
+    testing.check_resumption(dataset, dataset, 2)
+    testing.check_resumption(dataset, dataset, 3)
+
+
+def test_iterable_dataset_resumption_repeat() -> None:
     iterable = [{"data": "dataset_1", "value": i} for i in range(3)]
 
     dataset = CheckpointableDataset.from_iterable(iterable, repeat=True)
 
     testing.check_resumption(dataset, dataset, 0)
     testing.check_resumption(dataset, dataset, 1)
+    testing.check_resumption(dataset, dataset, 2)
     testing.check_resumption(dataset, dataset, 3)
     testing.check_resumption(dataset, dataset, 4)
+    testing.check_resumption(dataset, dataset, 6)
+    testing.check_resumption(dataset, dataset, 100)
+
+
+def test_iterable_dataset_resumption_repeat_single() -> None:
+    iterable = [{"data": "dataset_1", "value": i} for i in range(1)]
+
+    dataset = CheckpointableDataset.from_iterable(iterable, repeat=True)
+
+    testing.check_resumption(dataset, dataset, 0)
+    testing.check_resumption(dataset, dataset, 1)
+    testing.check_resumption(dataset, dataset, 2)
+    testing.check_resumption(dataset, dataset, 3)
+    testing.check_resumption(dataset, dataset, 4)
+    testing.check_resumption(dataset, dataset, 6)
+    testing.check_resumption(dataset, dataset, 100)
