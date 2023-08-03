@@ -36,7 +36,7 @@ class CheckpointableIterator(abc.ABC):
         raise NotImplementedError
 
 
-class CheckpointableDataset(abc.ABC):
+class CheckpointableDataset(torch.utils.data.IterableDataset, abc.ABC):
     def __iter__(self) -> CheckpointableIterator:
         return self.iter(state_dict=None)
 
@@ -214,3 +214,10 @@ class CheckpointableDataset(abc.ABC):
             )
         else:
             return self.map(_fn)
+
+    # `__add__` is implemented in PyTorch's `IterableDataset`,
+    # so we need to override it here for prevent unexpected behavior
+    def __add__(self, other: CheckpointableDataset) -> CheckpointableDataset:  # type: ignore
+        from .combinations import concat_datasets
+
+        return concat_datasets([self, other])
