@@ -16,9 +16,7 @@ class IterableIterator(CheckpointableIterator):
             try:
                 next(it)
             except StopIteration:
-                raise ValueError(
-                    f"start_index larger than iterable length: {start_index} >= {index}"
-                )
+                raise ValueError(f"start_index larger than iterable length: {start_index}")
 
         return it
 
