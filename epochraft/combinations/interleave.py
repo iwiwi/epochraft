@@ -24,7 +24,7 @@ def generate_stratified_sampling_order(weights: list[float], length: int) -> lis
 
 class InterleaveIterator(CheckpointableIterator):
     def __init__(
-        self, dataset: Interleave, sources: list[CheckpointableIterator], start_index: int
+        self, dataset: InterleaveDataset, sources: list[CheckpointableIterator], start_index: int
     ) -> None:
         self.dataset = dataset
         self.sources = sources
@@ -50,7 +50,7 @@ class InterleaveIterator(CheckpointableIterator):
         return state_dict
 
 
-class Interleave(CheckpointableDataset):
+class InterleaveDataset(CheckpointableDataset):
     def __init__(
         self,
         sources: list[CheckpointableDataset],
@@ -94,4 +94,4 @@ def interleave_datasets(
     weights: Optional[list[float]] = None,
     chunk_size: int = 1024,
 ) -> CheckpointableDataset:
-    return Interleave(sources, weights, chunk_size=chunk_size)
+    return InterleaveDataset(sources, weights, chunk_size=chunk_size)
