@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-from typing import Any, Optional
+import copy
+from typing import Any, Optional, Sequence
 
 import torch
 
 from ...base import CheckpointableDataset, CheckpointableIterator, Sample, StateDict
-from .tokenizer_utils import tensor_from_token_array
+from .tokenizer_utils import TokensQueue
 
 
 class ConcatChunkIterator(CheckpointableIterator):
@@ -13,27 +14,23 @@ class ConcatChunkIterator(CheckpointableIterator):
         self,
         dataset: ConcatChunkDataset,
         source: CheckpointableIterator,
-        buffer: Optional[torch.LongTensor],
+        buffers: Optional[dict[str, torch.Tensor]],
     ) -> None:
         self.dataset = dataset
         self.source = source
-        self.buffer = torch.empty((0,), dtype=torch.long) if buffer is None else buffer
+        self.queue = TokensQueue(columns=self.dataset.target_columns, buffers=buffers)
 
     def __next__(self) -> Sample:
-        while len(self.buffer) < self.dataset.chunk_length:
-            source_sample = next(self.source)
-            tokens = tensor_from_token_array(source_sample[self.dataset.column])
-            self.buffer = torch.cat((self.buffer, tokens))
-            print(tokens.shape, self.buffer.shape)
+        while self.queue.length() < self.dataset.chunk_length:
+            in_sample = next(self.source)
+            self.queue.push_from_sample(in_sample)
 
-        y = self.buffer[: self.dataset.chunk_length]
-        self.buffer = self.buffer[self.dataset.chunk_length :]
-        return {self.dataset.column: y}
+        return self.queue.pop_by_length(self.dataset.chunk_length)
 
     def state_dict(self) -> StateDict:
         return {
             "source": self.source.state_dict(),
-            "buffer": self.buffer,
+            "buffers": self.queue.buffers.copy(),
         }
 
 
@@ -42,21 +39,21 @@ class ConcatChunkDataset(CheckpointableDataset):
         self,
         source: CheckpointableDataset,
         chunk_length: int,
-        target_column: str,
+        target_columns: Sequence[str],
     ) -> None:
         self.source = source
-        self.column = target_column
+        self.target_columns = target_columns
         self.chunk_length = chunk_length
 
     def iter(self, state_dict: Optional[dict[str, Any]] = None) -> CheckpointableIterator:
         if state_dict:
             source_state_dict = state_dict.pop("source")
-            buffer = state_dict.pop("buffer")
+            buffers = copy.copy(state_dict.pop("buffers"))
             if state_dict:
                 raise ValueError(f"Unexpected keys in state_dict: {state_dict.keys()}")
         else:
             source_state_dict = None
-            buffer = None
+            buffers = None
 
         source = self.source.iter(state_dict=source_state_dict)
-        return ConcatChunkIterator(self, source, buffer)
+        return ConcatChunkIterator(self, source, buffers)

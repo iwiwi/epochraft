@@ -279,14 +279,14 @@ class CheckpointableDataset(torch.utils.data.IterableDataset, abc.ABC):
     def concat_chunk(
         self,
         chunk_length: int,
-        target_column: str = "input_ids",
+        target_columns: Sequence[str] = ("input_ids",),
     ) -> CheckpointableDataset:
         from .transforms import ConcatChunkDataset
 
         return ConcatChunkDataset(
             self,
             chunk_length=chunk_length,
-            target_column=target_column,
+            target_columns=target_columns,
         )
 
     def pack_chunk(

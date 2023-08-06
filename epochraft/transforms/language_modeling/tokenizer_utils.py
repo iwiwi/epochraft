@@ -56,7 +56,7 @@ def tensor_from_token_array(data: Optional[Union[int, TokenArray]]) -> torch.Ten
     return tensor
 
 
-class BufferDict:
+class TokensQueue:
     """
     A buffer dictionary class to manage, concatenate, pack, and chunk token arrays on the fly.
     """
@@ -76,13 +76,13 @@ class BufferDict:
         else:
             self.buffers = {column: torch.empty(0, dtype=torch.long) for column in columns}
 
-    def buffer_length(self) -> int:
+    def length(self) -> int:
         return len(next(iter(self.buffers.values())))
 
     def tensor_dict_from_sample(self, sample: Sample) -> dict[str, torch.Tensor]:
         return {column: tensor_from_token_array(sample[column]) for column in self.columns}
 
-    def append_from_tensor_dict(self, tensor_dict: dict[str, torch.Tensor]) -> None:
+    def push_from_tensor_dict(self, tensor_dict: dict[str, torch.Tensor]) -> None:
         input_length: Optional[int] = None
         for column in self.columns:
             tokens = tensor_dict[column]
@@ -95,15 +95,15 @@ class BufferDict:
 
             self.buffers[column] = torch.cat([self.buffers[column], tokens])
 
-    def append_from_sample(self, sample: Sample) -> None:
-        self.append_from_tensor_dict(self.tensor_dict_from_sample(sample))
+    def push_from_sample(self, sample: Sample) -> None:
+        self.push_from_tensor_dict(self.tensor_dict_from_sample(sample))
 
-    def take(self, length: int) -> Sample:
+    def pop_by_length(self, length: int) -> Sample:
         output = {column: self.buffers[column][:length] for column in self.columns}
         self.buffers = {column: self.buffers[column][length:] for column in self.columns}
         return output
 
-    def take_all(self) -> Sample:
+    def pop_all(self) -> Sample:
         output = {column: self.buffers[column] for column in self.columns}
         self.buffers = {column: torch.empty(0, dtype=torch.long) for column in self.columns}
         return output

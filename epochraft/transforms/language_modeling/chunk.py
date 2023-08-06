@@ -5,7 +5,7 @@ from typing import Optional, Sequence
 import torch
 
 from ...base import CheckpointableDataset, CheckpointableIterator, Sample, StateDict
-from .tokenizer_utils import BufferDict
+from .tokenizer_utils import TokensQueue
 
 
 class ChunkIterator(CheckpointableIterator):
@@ -17,27 +17,27 @@ class ChunkIterator(CheckpointableIterator):
     ) -> None:
         self.dataset = dataset
         self.source = source
-        self.buffers = BufferDict(columns=self.dataset.target_columns, buffers=buffers)
+        self.queue = TokensQueue(columns=self.dataset.target_columns, buffers=buffers)
 
     def __next__(self) -> Sample:
         # This is while-loop as we may receive empty samples from the source
-        while self.buffers.buffer_length() == 0:
+        while self.queue.length() == 0:
             in_sample = next(self.source)
-            self.buffers.append_from_sample(in_sample)
+            self.queue.push_from_sample(in_sample)
 
-        if self.buffers.buffer_length() < self.dataset.chunk_length:
-            out_sample = self.buffers.take_all()
+        if self.queue.length() < self.dataset.chunk_length:
+            out_sample = self.queue.pop_all()
             if self.dataset.drop_remainder:
                 return next(self)
             else:
                 return out_sample
         else:
-            return self.buffers.take(self.dataset.chunk_length)
+            return self.queue.pop_by_length(self.dataset.chunk_length)
 
     def state_dict(self) -> StateDict:
         return {
             "source": self.source.state_dict(),
-            "buffers": self.buffers.buffers.copy(),
+            "buffers": self.queue.buffers.copy(),
         }
 
 
