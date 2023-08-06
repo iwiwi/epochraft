@@ -1,5 +1,5 @@
 from .concat_chunk import ConcatChunkDataset, ConcatChunkIterator
-from .tokenizer_util import TokenizerBehavior, tensor_from_token_array
+from .tokenizer_utils import TokenizerBehavior, tensor_from_token_array
 
 
 __all__ = [

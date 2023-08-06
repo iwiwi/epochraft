@@ -3,7 +3,7 @@ import pytest
 import torch
 
 from epochraft import CheckpointableDataset, TokenArray, testing
-from epochraft.transforms.language_modeling.tokenizer_util import tensor_from_token_array
+from epochraft.transforms.language_modeling.tokenizer_utils import tensor_from_token_array
 
 
 @pytest.mark.parametrize(
