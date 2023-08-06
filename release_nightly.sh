@@ -38,16 +38,23 @@ python -m build --sdist --wheel
 twine check dist/*
 
 # Publish distribution to TestPyPI
-twine upload -r testpypi dist/*
+
+# Ask for confirmation before uploading to TestPyPI
+read -r -p "Do you really want to upload to production PyPI? (y/N): " yn
+: ${yn:=n}
+case $yn in
+  [Yy]* )
+    # Publish distribution to TestPyPI
+    twine upload -r testpypi-epochraft dist/*
+esac
 
 # Ask for confirmation before uploading to PyPI
 read -r -p "Do you really want to upload to production PyPI? (y/N): " yn
+: ${yn:=n}
 case $yn in
   [Yy]* )
     # Publish distribution to PyPI
-    twine upload -r pypi dist/* ;;
-  * )
-    echo "Aborting upload to production PyPI."; exit 1 ;;
+    twine upload -r pypi-epochraft dist/* ;;
 esac
 
 # Clean up

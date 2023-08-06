@@ -10,6 +10,7 @@ from typing import (
     Iterable,
     List,
     Literal,
+    Mapping,
     Optional,
     Sequence,
     Union,
@@ -211,6 +212,23 @@ class CheckpointableDataset(torch.utils.data.IterableDataset, abc.ABC):
             self,
             chunk_length=chunk_length,
             target_column=target_column,
+        )
+
+    def pack_chunk(
+        self,
+        chunk_length: int,
+        target_columns: Sequence[str],
+        pad_values: Mapping[str, Any],
+        discard_long_samples: bool = False,
+    ) -> CheckpointableDataset:
+        from .transforms import PackChunkDataset
+
+        return PackChunkDataset(
+            self,
+            chunk_length=chunk_length,
+            target_columns=target_columns,
+            pad_values=pad_values,
+            discard_long_samples=discard_long_samples,
         )
 
     def tokenize(

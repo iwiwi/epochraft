@@ -8,21 +8,30 @@ from .basic import (
     ParallelFilterMapDataset,
     ParallelFilterMapIterator,
 )
-from .language_modeling import ConcatChunkDataset, ConcatChunkIterator, add_bos_eos, ensure_bos_eos
+from .language_modeling import (
+    ConcatChunkDataset,
+    ConcatChunkIterator,
+    PackChunkDataset,
+    PackChunkIterator,
+    add_bos_eos,
+    ensure_bos_eos,
+)
 
 
 __all__ = [
     "FilterMapDataset",
     "FilterMapIterator",
     "FilterMapFn",
-    "ConcatChunkDataset",
-    "ConcatChunkIterator",
     "CountDataset",
     "CountIterator",
     "BatchDataset",
     "BatchIterator",
     "ParallelFilterMapDataset",
     "ParallelFilterMapIterator",
+    "ConcatChunkDataset",
+    "ConcatChunkIterator",
+    "PackChunkDataset",
+    "PackChunkIterator",
     "add_bos_eos",
     "ensure_bos_eos",
 ]
