@@ -218,7 +218,6 @@ class CheckpointableDataset(torch.utils.data.IterableDataset, abc.ABC):
         self,
         chunk_length: int,
         target_columns: Sequence[str],
-        pad_values: Mapping[str, Any],
         discard_long_samples: bool = False,
     ) -> CheckpointableDataset:
         from .transforms import PackChunkDataset
@@ -227,7 +226,6 @@ class CheckpointableDataset(torch.utils.data.IterableDataset, abc.ABC):
             self,
             chunk_length=chunk_length,
             target_columns=target_columns,
-            pad_values=pad_values,
             discard_long_samples=discard_long_samples,
         )
 
@@ -281,6 +279,15 @@ class CheckpointableDataset(torch.utils.data.IterableDataset, abc.ABC):
         from .transforms import ensure_bos_eos
 
         return ensure_bos_eos(self, tokenizer=tokenizer, target_column=target_column)
+
+    def pad(
+        self,
+        pad_values: Mapping[str, int],
+        chunk_length: int,
+    ) -> CheckpointableDataset:
+        from .transforms import pad
+
+        return pad(self, pad_values=pad_values, chunk_length=chunk_length)
 
     # `__add__` is implemented in PyTorch's `IterableDataset`,
     # so we need to override it here for prevent unexpected behavior

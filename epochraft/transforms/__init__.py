@@ -15,6 +15,7 @@ from .language_modeling import (
     PackChunkIterator,
     add_bos_eos,
     ensure_bos_eos,
+    pad,
 )
 
 
@@ -34,4 +35,5 @@ __all__ = [
     "PackChunkIterator",
     "add_bos_eos",
     "ensure_bos_eos",
+    "pad",
 ]

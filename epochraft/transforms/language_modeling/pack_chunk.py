@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import copy
-from typing import Any, Mapping, Optional, Sequence
+from typing import Any, Optional, Sequence
 
 import torch
 
@@ -52,20 +52,12 @@ class PackChunkIterator(CheckpointableIterator):
         else:
             self.buffers.append_from_tensor_dict(input_tensor_dict)
 
-        # Pad or truncate the output sample
+        # Truncate the output sample
         for column in self.dataset.target_columns:
-            pad_value = self.dataset.pad_values[column]
-
             if len(output_sample[column]) > self.dataset.chunk_length:
                 # Truncate
                 assert not self.dataset.discard_long_samples  # This should have been discarded
                 output_sample[column] = output_sample[column][: self.dataset.chunk_length]
-            else:
-                # Pad
-                pad_length = self.dataset.chunk_length - len(output_sample[column])
-                assert pad_length >= 0
-                pad_tensor = torch.full((pad_length,), pad_value, dtype=torch.long)
-                output_sample[column] = torch.cat((output_sample[column], pad_tensor))
 
         return output_sample
 
@@ -82,18 +74,12 @@ class PackChunkDataset(CheckpointableDataset):
         source: CheckpointableDataset,
         chunk_length: int,
         target_columns: Sequence[str],
-        pad_values: Mapping[str, int],
         discard_long_samples: bool = False,
     ) -> None:
         self.source = source
         self.target_columns = target_columns
         self.chunk_length = chunk_length
-        self.pad_values = pad_values
         self.discard_long_samples = discard_long_samples
-
-        for column in self.target_columns:
-            if column not in self.pad_values:
-                raise ValueError(f"Missing pad_value for column: {column}")
 
     def iter(self, state_dict: Optional[dict[str, Any]] = None) -> CheckpointableIterator:
         if state_dict:

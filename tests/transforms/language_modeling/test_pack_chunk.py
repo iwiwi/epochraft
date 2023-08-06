@@ -24,8 +24,10 @@ SAMPLES_MULTIPLE_COLUMNS = [
 
 
 def test_pack_chunk() -> None:
-    dataset = CheckpointableDataset.from_sequence(SAMPLES).pack_chunk(
-        chunk_length=4, target_columns=["input_ids"], pad_values={"input_ids": -1}
+    dataset = (
+        CheckpointableDataset.from_sequence(SAMPLES)
+        .pack_chunk(chunk_length=4, target_columns=["input_ids"])
+        .pad(chunk_length=4, pad_values={"input_ids": -1})
     )
     chunks = list(dataset)
 
@@ -38,11 +40,14 @@ def test_pack_chunk() -> None:
 
 
 def test_pack_chunk_discard_long_samples() -> None:
-    dataset = CheckpointableDataset.from_sequence(SAMPLES).pack_chunk(
-        chunk_length=4,
-        target_columns=["input_ids"],
-        pad_values={"input_ids": -1},
-        discard_long_samples=True,
+    dataset = (
+        CheckpointableDataset.from_sequence(SAMPLES)
+        .pack_chunk(
+            chunk_length=4,
+            target_columns=["input_ids"],
+            discard_long_samples=True,
+        )
+        .pad(chunk_length=4, pad_values={"input_ids": -1})
     )
     chunks = list(dataset)
 
@@ -54,10 +59,10 @@ def test_pack_chunk_discard_long_samples() -> None:
 
 
 def test_pack_chunk_multiple_columns() -> None:
-    dataset = CheckpointableDataset.from_sequence(SAMPLES_MULTIPLE_COLUMNS).pack_chunk(
-        chunk_length=4,
-        target_columns=["input_ids", "labels"],
-        pad_values={"input_ids": -1, "labels": -2},
+    dataset = (
+        CheckpointableDataset.from_sequence(SAMPLES_MULTIPLE_COLUMNS)
+        .pack_chunk(chunk_length=4, target_columns=["input_ids", "labels"])
+        .pad(chunk_length=4, pad_values={"input_ids": -1, "labels": -2})
     )
     chunks = list(dataset)
 
@@ -70,12 +75,10 @@ def test_pack_chunk_multiple_columns() -> None:
 
 
 def test_pack_chunk_resumption() -> None:
-    dataset = CheckpointableDataset.from_sequence(
-        SAMPLES_MULTIPLE_COLUMNS, repeat=True, shuffle=True
-    ).pack_chunk(
-        5,
-        target_columns=["input_ids", "labels"],
-        pad_values={"input_ids": -1, "labels": -2},
+    dataset = (
+        CheckpointableDataset.from_sequence(SAMPLES_MULTIPLE_COLUMNS, repeat=True, shuffle=True)
+        .pack_chunk(5, target_columns=["input_ids", "labels"])
+        .pad(chunk_length=5, pad_values={"input_ids": -1, "labels": -2})
     )
 
     testing.check_resumption(dataset, dataset, 0)
