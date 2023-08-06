@@ -5,7 +5,7 @@ from typing import Optional, Sequence, Union
 import numpy as np
 import torch
 
-from ...base import Sample, StateDict, TokenArray
+from ...base import Sample, TokenArray
 
 
 def tensor_from_token_array(data: Optional[Union[int, TokenArray]]) -> torch.Tensor:
@@ -69,12 +69,13 @@ class BufferDict:
 
         # TODO: state dict initialization
         if buffers is not None:
+            if set(columns) != set(buffers.keys()):
+                raise ValueError(
+                    f"columns and buffers keys must match: {columns} != {buffers.keys()}"
+                )
             self.buffers = buffers
         else:
             self.buffers = {column: torch.empty(0, dtype=torch.long) for column in columns}
-
-    def state_dict(self) -> StateDict:
-        return {"buffers": self.buffers}
 
     def buffer_length(self) -> int:
         return len(next(iter(self.buffers.values())))

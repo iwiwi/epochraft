@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 from typing import Any, Mapping, Optional, Sequence
 
 import torch
@@ -13,7 +14,7 @@ class PackChunkIterator(CheckpointableIterator):
         self,
         dataset: PackChunkDataset,
         source: CheckpointableIterator,
-        buffers: dict[str, torch.Tensor],
+        buffers: Optional[dict[str, torch.Tensor]],
     ) -> None:
         self.dataset = dataset
         self.buffers = BufferDict(columns=self.dataset.target_columns, buffers=buffers)
@@ -69,7 +70,10 @@ class PackChunkIterator(CheckpointableIterator):
         return output_sample
 
     def state_dict(self) -> StateDict:
-        raise NotImplementedError()
+        return {
+            "source": self.source.state_dict(),
+            "buffers": self.buffers.buffers.copy(),
+        }
 
 
 class PackChunkDataset(CheckpointableDataset):
@@ -94,7 +98,7 @@ class PackChunkDataset(CheckpointableDataset):
     def iter(self, state_dict: Optional[dict[str, Any]] = None) -> CheckpointableIterator:
         if state_dict:
             source_state_dict = state_dict.pop("source")
-            buffers = state_dict.pop("buffers")
+            buffers = copy.copy(state_dict.pop("buffers"))
             if state_dict:
                 raise ValueError(f"Unexpected keys in state_dict: {state_dict.keys()}")
         else:
