@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from typing import Any, Optional, Union
+from typing import Any, Optional
 
 import torch
 
-from ...base import CheckpointableDataset, CheckpointableIterator, Sample, StateDict, TokenArray
+from ...base import CheckpointableDataset, CheckpointableIterator, Sample, StateDict
 from .tokenizer_utils import tensor_from_token_array
 
 

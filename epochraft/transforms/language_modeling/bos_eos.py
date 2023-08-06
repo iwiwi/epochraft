@@ -4,7 +4,6 @@ import dataclasses
 from typing import TYPE_CHECKING, Optional
 
 import torch
-from transformers import PreTrainedTokenizerBase
 
 from ...base import CheckpointableDataset, Sample
 from .tokenizer_utils import tensor_from_token_array
@@ -24,7 +23,7 @@ class TokenizerBehavior:
     bos_token_id: Optional[int]
     eos_token_id: Optional[int]
 
-    # Some tokenizers (like `"gpt2"` and `"EleutherAI/gpt-neox-20b"`) have the same token for bos and eos.
+    # Some tokenizers (like "gpt-neox-20b" and "gpt2") have the same token for bos and eos.
     bos_eos_equal: bool
 
     # Tokenization result for `TOKENIZATION_EXAMPLE_STR`
@@ -44,7 +43,7 @@ class TokenizerBehavior:
             )
 
         if tokenizer(TOKENIZATION_EXAMPLE_STR)["input_ids"] != ids_example:
-            raise ValueError(f"Tokenizer returned different results for `encode` and `__call__`")
+            raise ValueError("Tokenizer returned different results for `encode` and `__call__`")
 
         if len(ids_example) > 0 and ids_example[0] == tokenizer.bos_token_id:
             bos_token_added = True
@@ -100,7 +99,7 @@ def ensure_bos_eos(
 ) -> CheckpointableDataset:
     behavior = TokenizerBehavior.from_tokenizer(tokenizer)
 
-    # Some tokenizers (like `"gpt2"` and `"EleutherAI/gpt-neox-20b"`) have the same token for bos and eos.
+    # Some tokenizers (like "gpt2" and "gpt-neox-20b") have the same token for bos and eos.
     # In this case, we don't have to add both.
     if behavior.bos_eos_equal:
         if behavior.bos_token_added or behavior.eos_token_added:

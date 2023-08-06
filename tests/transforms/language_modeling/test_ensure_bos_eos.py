@@ -10,47 +10,47 @@ from transformers import (
 )
 
 from epochraft import CheckpointableDataset
-from epochraft.transforms.language_modeling.ensure_bos_eos import TokenizerBehavior
+from epochraft.transforms.language_modeling.bos_eos import TokenizerBehavior
 
 
-def test_tokenizer_behavior_gpt2():
+def test_tokenizer_behavior_gpt2() -> None:
     tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
     behavior = TokenizerBehavior.from_tokenizer(tokenizer)
-    assert behavior.bos_eos_equal == True
-    assert behavior.bos_token_added == False
-    assert behavior.eos_token_added == False
+    assert behavior.bos_eos_equal
+    assert not behavior.bos_token_added
+    assert not behavior.eos_token_added
 
 
-def test_tokenizer_behavior_gpt2_fast():
+def test_tokenizer_behavior_gpt2_fast() -> None:
     tokenizer = GPT2TokenizerFast.from_pretrained("gpt2")
     behavior = TokenizerBehavior.from_tokenizer(tokenizer)
-    assert behavior.bos_eos_equal == True
-    assert behavior.bos_token_added == False
-    assert behavior.eos_token_added == False
+    assert behavior.bos_eos_equal
+    assert not behavior.bos_token_added
+    assert not behavior.eos_token_added
 
 
-def test_tokenizer_behavior_neox():
+def test_tokenizer_behavior_neox() -> None:
     tokenizer = AutoTokenizer.from_pretrained("EleutherAI/gpt-neox-20b")
     behavior = TokenizerBehavior.from_tokenizer(tokenizer)
-    assert behavior.bos_eos_equal == True
-    assert behavior.bos_token_added == False
-    assert behavior.eos_token_added == False
+    assert behavior.bos_eos_equal
+    assert not behavior.bos_token_added
+    assert not behavior.eos_token_added
 
 
-def test_tokenizer_behavior_novelai():
+def test_tokenizer_behavior_novelai() -> None:
     tokenizer = LlamaTokenizer.from_pretrained("NovelAI/nerdstash-tokenizer-v1")
     behavior = TokenizerBehavior.from_tokenizer(tokenizer)
-    assert behavior.bos_eos_equal == False
-    assert behavior.bos_token_added == True
-    assert behavior.eos_token_added == False
+    assert not behavior.bos_eos_equal
+    assert behavior.bos_token_added
+    assert not behavior.eos_token_added
 
 
-def test_tokenizer_behavior_t5():
+def test_tokenizer_behavior_t5() -> None:
     tokenizer = T5Tokenizer.from_pretrained("t5-small")
     behavior = TokenizerBehavior.from_tokenizer(tokenizer)
-    assert behavior.bos_eos_equal == False
-    assert behavior.bos_token_added == False
-    assert behavior.eos_token_added == True
+    assert not behavior.bos_eos_equal
+    assert not behavior.bos_token_added
+    assert behavior.eos_token_added
 
 
 SAMPLES = [
