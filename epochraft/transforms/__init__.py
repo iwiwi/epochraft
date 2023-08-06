@@ -1,8 +1,14 @@
-from .batch import BatchDataset, BatchIterator
-from .count import CountDataset, CountIterator
-from .filter_map import FilterMapDataset, FilterMapIterator
+from .basic import (
+    BatchDataset,
+    BatchIterator,
+    CountDataset,
+    CountIterator,
+    FilterMapDataset,
+    FilterMapIterator,
+    ParallelFilterMapDataset,
+    ParallelFilterMapIterator,
+)
 from .language_modeling import ConcatChunkDataset, ConcatChunkIterator
-from .parallel_filter_map import ParallelFilterMapDataset, ParallelFilterMapIterator
 
 
 __all__ = [

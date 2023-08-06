@@ -10,7 +10,7 @@ from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from contextlib import contextmanager
 from typing import Any, Callable, Generator, Iterator, Optional, Type, Union
 
-from ..base import (
+from ...base import (
     CheckpointableDataset,
     CheckpointableIterator,
     FilterMapFn,

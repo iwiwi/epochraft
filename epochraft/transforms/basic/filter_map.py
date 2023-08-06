@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
-from ..base import CheckpointableDataset, CheckpointableIterator, FilterMapFn, Sample, StateDict
+from ...base import CheckpointableDataset, CheckpointableIterator, FilterMapFn, Sample, StateDict
 
 
 class FilterMapIterator(CheckpointableIterator):
