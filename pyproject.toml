@@ -42,6 +42,7 @@ development = [
     "pytest",
     "mosaicml-streaming",
     "transformers",
+    "sentencepiece",
 ]
 
 [project.urls]
