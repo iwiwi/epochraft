@@ -15,7 +15,7 @@
 
 ### Why On-the-Fly Tokenization?
 
-Previous frmaeworks like [GPT-NeoX](https://github.com/EleutherAI/gpt-neox) requires pre-tokenization. That is, we need to tokenize the training data and store it before pretraining. However, this method is cumbersome and requires additional steps. Training can't begin until this is completed. If you change the dataset or the tokenizer, you'll have to recreate again. And, we need to manage the tokenized data.
+Previous frameworks like [GPT-NeoX](https://github.com/EleutherAI/gpt-neox) requires pre-tokenization. That is, we need to tokenize the training data and store it before pretraining. However, this method is cumbersome and requires additional steps. Training can't begin until this is completed. If you change the dataset or the tokenizer, you'll have to recreate again. And, we need to manage the tokenized data.
 
 You may ask "But, isn't on-the-fly tokenization too slow?" The answer is a definitive no.
 
