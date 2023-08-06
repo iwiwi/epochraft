@@ -67,7 +67,6 @@ class BufferDict:
 
         self.columns = columns
 
-        # TODO: state dict initialization
         if buffers is not None:
             if set(columns) != set(buffers.keys()):
                 raise ValueError(

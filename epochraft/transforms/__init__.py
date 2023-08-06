@@ -9,6 +9,8 @@ from .basic import (
     ParallelFilterMapIterator,
 )
 from .language_modeling import (
+    ChunkDataset,
+    ChunkIterator,
     ConcatChunkDataset,
     ConcatChunkIterator,
     PackChunkDataset,
@@ -29,6 +31,8 @@ __all__ = [
     "BatchIterator",
     "ParallelFilterMapDataset",
     "ParallelFilterMapIterator",
+    "ChunkDataset",
+    "ChunkIterator",
     "ConcatChunkDataset",
     "ConcatChunkIterator",
     "PackChunkDataset",

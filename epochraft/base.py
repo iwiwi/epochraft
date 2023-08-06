@@ -201,34 +201,6 @@ class CheckpointableDataset(torch.utils.data.IterableDataset, abc.ABC):
             self, batch_size=batch_size, collate_fn=collate_fn, drop_last=drop_last
         )
 
-    def concat_chunk(
-        self,
-        chunk_length: int,
-        target_column: str = "input_ids",
-    ) -> CheckpointableDataset:
-        from .transforms import ConcatChunkDataset
-
-        return ConcatChunkDataset(
-            self,
-            chunk_length=chunk_length,
-            target_column=target_column,
-        )
-
-    def pack_chunk(
-        self,
-        chunk_length: int,
-        target_columns: Sequence[str],
-        discard_long_samples: bool = False,
-    ) -> CheckpointableDataset:
-        from .transforms import PackChunkDataset
-
-        return PackChunkDataset(
-            self,
-            chunk_length=chunk_length,
-            target_columns=target_columns,
-            discard_long_samples=discard_long_samples,
-        )
-
     def tokenize(
         self,
         tokenizer: Tokenizer,
@@ -288,6 +260,49 @@ class CheckpointableDataset(torch.utils.data.IterableDataset, abc.ABC):
         from .transforms import pad
 
         return pad(self, pad_values=pad_values, chunk_length=chunk_length)
+
+    def chunk(
+        self,
+        chunk_length: int,
+        target_columns: Sequence[str] = ("input_ids",),
+        drop_remainder: bool = True,
+    ) -> CheckpointableDataset:
+        from .transforms import ChunkDataset
+
+        return ChunkDataset(
+            self,
+            chunk_length=chunk_length,
+            target_columns=target_columns,
+            drop_remainder=drop_remainder,
+        )
+
+    def concat_chunk(
+        self,
+        chunk_length: int,
+        target_column: str = "input_ids",
+    ) -> CheckpointableDataset:
+        from .transforms import ConcatChunkDataset
+
+        return ConcatChunkDataset(
+            self,
+            chunk_length=chunk_length,
+            target_column=target_column,
+        )
+
+    def pack_chunk(
+        self,
+        chunk_length: int,
+        target_columns: Sequence[str],
+        discard_long_samples: bool = False,
+    ) -> CheckpointableDataset:
+        from .transforms import PackChunkDataset
+
+        return PackChunkDataset(
+            self,
+            chunk_length=chunk_length,
+            target_columns=target_columns,
+            discard_long_samples=discard_long_samples,
+        )
 
     # `__add__` is implemented in PyTorch's `IterableDataset`,
     # so we need to override it here for prevent unexpected behavior
