@@ -23,14 +23,7 @@ class ConcatChunkIterator(CheckpointableIterator):
         while len(self.buffer) < self.dataset.chunk_length:
             source_sample = next(self.source)
             tokens = tensor_from_token_array(source_sample[self.dataset.column])
-            self.buffer = torch.cat(
-                [
-                    self.buffer,
-                    self.dataset.bos_tokens,
-                    tokens,
-                    self.dataset.eos_tokens,
-                ]
-            )
+            self.buffer = torch.cat((self.buffer, tokens))
             print(tokens.shape, self.buffer.shape)
 
         y = self.buffer[: self.dataset.chunk_length]
@@ -49,15 +42,11 @@ class ConcatChunkDataset(CheckpointableDataset):
         self,
         source: CheckpointableDataset,
         chunk_length: int,
-        column: str,
-        bos_tokens: Optional[Union[int, TokenArray]],
-        eos_tokens: Optional[Union[int, TokenArray]],
+        target_column: str,
     ) -> None:
         self.source = source
-        self.column = column
+        self.column = target_column
         self.chunk_length = chunk_length
-        self.bos_tokens = tensor_from_token_array(bos_tokens)
-        self.eos_tokens = tensor_from_token_array(eos_tokens)
 
     def iter(self, state_dict: Optional[dict[str, Any]] = None) -> CheckpointableIterator:
         if state_dict:

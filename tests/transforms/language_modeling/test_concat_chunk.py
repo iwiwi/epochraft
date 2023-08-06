@@ -73,10 +73,10 @@ def test_concat_chunk_simple() -> None:
         {"input_ids": [3]},
         {"input_ids": [4, 5, 6, 7, 8, 9, 10, 11]},
     ]
-    dataset = CheckpointableDataset.from_sequence(samples).concat_chunk(
-        chunk_length=4,
-        bos_tokens=[-1],
-        eos_tokens=[-2],
+    dataset = (
+        CheckpointableDataset.from_sequence(samples)
+        .add_bos_eos(-1, -2)
+        .concat_chunk(chunk_length=4)
     )
     chunks = list(dataset)
 
@@ -99,12 +99,10 @@ def test_concat_chunk_simple() -> None:
 
 def test_concat_chunk_resumption() -> None:
     samples_original = testing.generate_tokenized_samples()
-    dataset = CheckpointableDataset.from_sequence(
-        samples_original, repeat=True, shuffle=True
-    ).concat_chunk(
-        chunk_length=5,
-        eos_tokens=[-1],
-        bos_tokens=[-2],
+    dataset = (
+        CheckpointableDataset.from_sequence(samples_original, repeat=True, shuffle=True)
+        .add_bos_eos(-1, -2)
+        .concat_chunk(chunk_length=5)
     )
 
     testing.check_resumption(dataset, dataset, 0)

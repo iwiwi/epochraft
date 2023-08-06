@@ -68,6 +68,31 @@ class TokenizerBehavior:
         )
 
 
+def add_bos_eos(
+    source: CheckpointableDataset,
+    bos_token_id: Optional[int],
+    eos_token_id: Optional[int],
+    target_column: str,
+) -> CheckpointableDataset:
+    if bos_token_id is not None:
+        bos_tensor = tensor_from_token_array([bos_token_id])
+    else:
+        bos_tensor = tensor_from_token_array([])
+
+    if eos_token_id is not None:
+        eos_tensor = tensor_from_token_array([eos_token_id])
+    else:
+        eos_tensor = tensor_from_token_array([])
+
+    def _fn(sample: Sample) -> Sample:
+        sample = sample.copy()
+        tokens = tensor_from_token_array(sample[target_column])
+        sample[target_column] = torch.cat((bos_tensor, tokens, eos_tensor))
+        return sample
+
+    return source.map(_fn)
+
+
 def ensure_bos_eos(
     source: CheckpointableDataset,
     tokenizer: PreTrainedTokenizerBase,
@@ -84,22 +109,16 @@ def ensure_bos_eos(
         else:
             # Either of BOS or EOS should be added, but not both.
             # Here, we choose to add EOS.
-            bos_tokens = tensor_from_token_array([])
-            eos_tokens = tensor_from_token_array([tokenizer.bos_token_id])
+            return add_bos_eos(source, None, tokenizer.eos_token_id, target_column)
     else:
         if not behavior.bos_token_added and tokenizer.bos_token:
-            bos_tokens = tensor_from_token_array([tokenizer.bos_token_id])
+            bos_token_to_add = tokenizer.bos_token_id
         else:
-            bos_tokens = tensor_from_token_array([])
+            bos_token_to_add = None
 
         if not behavior.eos_token_added and tokenizer.eos_token:
-            eos_tokens = tensor_from_token_array([tokenizer.eos_token_id])
+            eos_token_to_add = tokenizer.eos_token_id
         else:
-            eos_tokens = tensor_from_token_array([])
+            bos_token_to_add = None
 
-    def _fn(sample: Sample) -> Sample:
-        tokens = tensor_from_token_array(sample[target_column])
-        sample[target_column] = torch.cat((bos_tokens, tokens, eos_tokens))
-        return sample
-
-    return source.map(_fn)
+        return add_bos_eos(source, bos_token_to_add, eos_token_to_add, target_column)

@@ -203,18 +203,14 @@ class CheckpointableDataset(torch.utils.data.IterableDataset, abc.ABC):
     def concat_chunk(
         self,
         chunk_length: int,
-        column: str = "input_ids",
-        bos_tokens: Optional[TokenArray] = None,
-        eos_tokens: Optional[TokenArray] = None,
+        target_column: str = "input_ids",
     ) -> CheckpointableDataset:
         from .transforms import ConcatChunkDataset
 
         return ConcatChunkDataset(
             self,
             chunk_length=chunk_length,
-            column=column,
-            bos_tokens=bos_tokens,
-            eos_tokens=eos_tokens,
+            target_column=target_column,
         )
 
     def tokenize(
@@ -231,6 +227,7 @@ class CheckpointableDataset(torch.utils.data.IterableDataset, abc.ABC):
         tokenizer_kwargs = tokenizer_kwargs or {}
 
         def _fn(sample: Sample) -> Sample:
+            sample = sample.copy()
             sample.update(tokenizer(sample[target_column], **tokenizer_kwargs))
             return sample
 
@@ -247,6 +244,18 @@ class CheckpointableDataset(torch.utils.data.IterableDataset, abc.ABC):
             )
         else:
             return self.map(_fn)
+
+    def add_bos_eos(
+        self,
+        bos_token_id: Optional[int],
+        eos_token_id: Optional[int],
+        target_column: str = "input_ids",
+    ) -> CheckpointableDataset:
+        from .transforms import add_bos_eos
+
+        return add_bos_eos(
+            self, bos_token_id=bos_token_id, eos_token_id=eos_token_id, target_column=target_column
+        )
 
     def ensure_bos_eos(
         self, tokenizer: Tokenizer, target_column: str = "input_ids"
