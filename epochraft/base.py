@@ -248,6 +248,13 @@ class CheckpointableDataset(torch.utils.data.IterableDataset, abc.ABC):
         else:
             return self.map(_fn)
 
+    def ensure_bos_eos(
+        self, tokenizer: Tokenizer, target_column: str = "input_ids"
+    ) -> CheckpointableDataset:
+        from .transforms import ensure_bos_eos
+
+        return ensure_bos_eos(self, tokenizer=tokenizer, target_column=target_column)
+
     # `__add__` is implemented in PyTorch's `IterableDataset`,
     # so we need to override it here for prevent unexpected behavior
     def __add__(self, other: CheckpointableDataset) -> CheckpointableDataset:  # type: ignore

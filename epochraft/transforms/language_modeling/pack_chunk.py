@@ -6,7 +6,7 @@ import numpy as np
 import torch
 
 from ...base import CheckpointableDataset, CheckpointableIterator, Sample, StateDict, TokenArray
-from .tokenizer_util import tensor_from_token_array
+from .tokenizer_utils import tensor_from_token_array
 
 
 class _Buffer:
