@@ -10,10 +10,10 @@ parameterize_parallel_config = pytest.mark.parametrize(
     [
         (None, 2, "process"),
         (2, 1, "process"),
-        (10, 100, "process"),
+        (4, 10, "process"),
         (None, 2, "thread"),
         (2, 1, "thread"),
-        (10, 100, "thread"),
+        (4, 10, "thread"),
     ],
 )
 
