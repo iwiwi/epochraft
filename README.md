@@ -7,13 +7,47 @@
 [![pypi](https://img.shields.io/pypi/v/epochraft.svg)](https://pypi.python.org/pypi/epochraft)
 
 
-Supercharge your LLM training with checkpointable data loading.
 
-## Key Features
+## Introduction
 
-* **Checkpointing** - Epochraft operates completely deterministically, and allows for a full restoration of state through checkpointing.
-* **Simple** - It's a minimally readable implementation that makes it easy for users to add sources and transforms.
-* **LLM-Ready** - It is equipped out of the box with features necessary for pre-training and SFT of LLMs.
+*Epochraft* is a data loader library designed with a focus on **on-the-fly tokenization** and **checkpointing**, specifically for the streamlined training of LLMs.
+
+
+### Why On-the-Fly Tokenization?
+
+Previous frmaeworks like [GPT-NeoX](https://github.com/EleutherAI/gpt-neox) requires pre-tokenization. That is, we need to tokenize the training data and store it before pretraining. However, this method is cumbersome and requires additional steps. Training can't begin until this is completed. If you change the dataset or the tokenizer, you'll have to recreate again. And, we need to manage the tokenized data.
+
+You may ask "But, isn't on-the-fly tokenization too slow?" The answer is a definitive no.
+
+For instance, the training of Llama2-7B is conducted at the speed of about 3K tokens/sec per GPU (see [Table 2](https://arxiv.org/abs/2307.09288)). The tokenizer of Llama2 can tokenize at a rate of about 1M tokens/sec with a single CPU process. Even if tokenizing in real-time in the background, you can easily saturate the GPUs. Larger models are even easier. With 13B, you can saturate each GPU by providing 1.5K tokens/sec, and with 70B, by just 300 tokens/sec.
+
+
+
+### Why Data Loader Checkpointing?
+
+The standard practice of checkpointing in PyTorch involves saving the `state_dict` of the model and optimizer. However, as we are training LLMs, we should also want to save the `state_dict` of the data loader.
+
+In the era of training ResNets for 90 epochs, there was no such need. Simply checkpointing at the end of each epoch was enough. But now, in the age of LLMs, we often train around 1 epoch.
+
+In training for 1 epoch, it's necessary to ensure that the data loader can continue from the middle of an epoch as well. After resuming the training, we want to correctly use only the data that has not been used up to that point. Moreover, since the data is quite large, an efficient resumption is needed, not an inefficient method that reads and discards all the data up to that point.
+
+
+
+
+### Epochraft: On-the-Fly Tokenization + Checkpointing
+
+Epochraft is designed with the aim of achieving both on-the-fly tokenization and checkpointing. Neither on-the-fly tokenization nor checkpointing are exceptionally difficult features in themselves. However, when attempting to realize both simultaneously, significant constraints arise at the core of the design. That's why no existing libraries are compatible with both features.
+
+In Epochraft, a variety of existing datasets can be used as sources, so it supports a wide range of data formats. Particularly, when using [MosaicML Streaming](https://github.com/mosaicml/streaming) as a source, you can train directly by streaming data from S3,
+and resumption is efficient.
+
+As Epochraft is a library focused on the training of LLMs, it is equipped with features that are necessary for pretraining and SFT of LLMs. Operations like tokenization and chunking are available out of the box. Additionally, tokenization is performed efficiently using multi-processes.
+
+
+
+
+
+
 
 
 ## Quick Start
