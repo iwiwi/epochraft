@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from epochraft import CheckpointableDataset, testing
+from epochraft import CheckpointableDataset
 
 
 SAMPLES = [{"id": i} for i in range(30)]
