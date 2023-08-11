@@ -233,6 +233,15 @@ class CheckpointableDataset(torch.utils.data.IterableDataset, abc.ABC):
             self, batch_size=batch_size, collate_fn=collate_fn, drop_last=drop_last
         )
 
+    def stride(
+        self,
+        interval: int,
+        offset: int,
+    ) -> CheckpointableDataset:
+        from .transforms import StrideDataset
+
+        return StrideDataset(self, interval=interval, offset=offset)
+
     def tokenize(
         self,
         tokenizer: Tokenizer,

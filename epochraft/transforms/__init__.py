@@ -4,6 +4,7 @@ from .basic import (
     FilterMapDataset,
     ParallelFilterMapDataset,
     ShuffleDataset,
+    StrideDataset,
 )
 from .language_modeling import (
     ChunkDataset,
@@ -22,6 +23,7 @@ __all__ = [
     "BatchDataset",
     "ParallelFilterMapDataset",
     "ShuffleDataset",
+    "StrideDataset",
     "ChunkDataset",
     "ConcatChunkDataset",
     "PackChunkDataset",
