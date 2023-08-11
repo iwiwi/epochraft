@@ -1,3 +1,5 @@
+from webdataset.shardlists import expand_urls
+
 from .base import (
     CheckpointableDataset,
     CheckpointableIterator,
@@ -12,6 +14,7 @@ from .version import __version__
 
 
 __all__ = [
+    "expand_urls",
     "CheckpointableDataset",
     "CheckpointableIterator",
     "FileFormat",
