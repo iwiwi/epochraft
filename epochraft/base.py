@@ -212,6 +212,15 @@ class CheckpointableDataset(torch.utils.data.IterableDataset, abc.ABC):
 
         return CountDataset(self, max_count=max_count)
 
+    def shuffle(
+        self,
+        buffer_size: int,
+        seed: int = 42,
+    ) -> CheckpointableDataset:
+        from .transforms import ShuffleDataset
+
+        return ShuffleDataset(self, buffer_size=buffer_size, seed=seed)
+
     def batch(
         self,
         batch_size: int,

@@ -14,7 +14,7 @@ class SequenceIterator(CheckpointableIterator):
         self._reshuffle()
 
     def _reshuffle(self) -> None:
-        if self.dataset.shuffle:
+        if self.dataset.shuffle_per_epoch:
             self.rng.shuffle(self.order)
 
     def __next__(self) -> Sample:
@@ -49,7 +49,7 @@ class SequenceDataset(CheckpointableDataset):
     ) -> None:
         self.sequence = sequence
         self.repeat = repeat
-        self.shuffle = shuffle
+        self.shuffle_per_epoch = shuffle
         self.shuffle_seed = shuffle_seed
 
     def iter(self, state_dict: Optional[StateDict] = None) -> CheckpointableIterator:
