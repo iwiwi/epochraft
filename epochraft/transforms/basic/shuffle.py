@@ -3,7 +3,7 @@ from __future__ import annotations
 import random
 from typing import Optional
 
-from ...base import CheckpointableDataset, CheckpointableIterator, FileFormat, Sample, StateDict
+from ...base import CheckpointableDataset, CheckpointableIterator, Sample, StateDict
 
 
 class ShuffleIterator(CheckpointableIterator):
