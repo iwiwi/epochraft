@@ -29,6 +29,7 @@ requires-python = ">=3.8"
 dependencies = [
   "torch",
   "numpy",
+  "webdataset",
 ]
 dynamic = ["version"]
 
@@ -43,6 +44,7 @@ development = [
     "mosaicml-streaming",
     "transformers",
     "sentencepiece",
+    "cbor2",
 ]
 
 [project.urls]

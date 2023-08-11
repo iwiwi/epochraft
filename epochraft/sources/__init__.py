@@ -1,13 +1,12 @@
-from .iterable import IterableDataset, IterableIterator
-from .mosaicml import MosaicmlDataset, MosaicmlIterator
-from .sequence import SequenceDataset, SequenceIterator
+from .files import FilesDataset
+from .iterable import IterableDataset
+from .mosaicml import MosaicmlDataset
+from .sequence import SequenceDataset
 
 
 __all__ = [
+    "FilesDataset",
     "SequenceDataset",
-    "SequenceIterator",
     "IterableDataset",
-    "IterableIterator",
     "MosaicmlDataset",
-    "MosaicmlIterator",
 ]

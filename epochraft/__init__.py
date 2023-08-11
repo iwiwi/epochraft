@@ -1,6 +1,7 @@
 from .base import (
     CheckpointableDataset,
     CheckpointableIterator,
+    FileFormat,
     ParallelExecutorType,
     Sample,
     StateDict,
@@ -13,6 +14,7 @@ from .version import __version__
 __all__ = [
     "CheckpointableDataset",
     "CheckpointableIterator",
+    "FileFormat",
     "Sample",
     "StateDict",
     "TokenArray",

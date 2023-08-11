@@ -33,6 +33,7 @@ TokenArray = Union[List[int], np.ndarray, torch.Tensor]
 FilterMapFn = Callable[[Sample], Optional[Sample]]
 CollateFn = Callable[[List[Sample]], Sample]
 ParallelExecutorType = Literal["process", "thread"]
+FileFormat = Literal["auto", "jsonl", "cbor"]
 
 
 class CheckpointableIterator(abc.ABC):
@@ -97,6 +98,28 @@ class CheckpointableDataset(torch.utils.data.IterableDataset, abc.ABC):
         from .sources import MosaicmlDataset
 
         return MosaicmlDataset(mosaicml_dataset, repeat=repeat)
+
+    @staticmethod
+    def from_files(
+        urls: Union[str, Sequence[str]],
+        repeat: bool,
+        shuffle_shards: bool,
+        format: FileFormat = "auto",
+        n_active_shards: int = 10,
+        n_standby_shards: int = 4,
+        seed: int = 42,
+    ) -> CheckpointableDataset:
+        from .sources import FilesDataset
+
+        return FilesDataset(
+            urls=urls,
+            repeat=repeat,
+            shuffle_shards=shuffle_shards,
+            format=format,
+            n_active_shards=n_active_shards,
+            n_standby_shards=n_standby_shards,
+            seed=seed,
+        )
 
     def filter_map(self, fn: FilterMapFn) -> CheckpointableDataset:
         from .transforms import FilterMapDataset
