@@ -10,7 +10,7 @@ SAMPLES = [{"id": i} for i in range(30)]
 
 @pytest.mark.parametrize("buffer_size", [2, 10, 100])
 def test_shuffle(buffer_size: int) -> None:
-    samples = list(CheckpointableDataset.from_sequence(SAMPLES).shuffle(10))
+    samples = list(CheckpointableDataset.from_sequence(SAMPLES).shuffle(buffer_size))
     assert samples != SAMPLES
 
 
