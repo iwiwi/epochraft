@@ -56,11 +56,21 @@ def _deduce_format(url: str) -> FileFormat:
         raise ValueError(f"Could not deduce format from url: {url}")
 
 
+def _convert_url(url: str) -> str:
+    # https://github.com/webdataset/webdataset/issues/21
+    if url.startswith("s3://"):
+        return f"pipe:aws s3 cp {url} -"
+    else:
+        return url
+
+
 def yield_samples(
     url: str,
     format: FileFormat = "auto",
     n_samples_to_skip: int = 0,
 ) -> Generator[Sample, None, None]:
+    url = _convert_url(url)
+    print(str)
     if format == "auto":
         format = _deduce_format(url)
     format = format.lower()  # type: ignore
