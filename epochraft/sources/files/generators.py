@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import io
 import json
+import locale
 from typing import IO, BinaryIO, Generator, Union
 
 import webdataset
@@ -32,18 +33,33 @@ def _yield_samples_cbor(
 
 
 def _yield_samples_jsonl(
-    stream: GopenStream, n_samples_to_skip: int = 0
+    stream: GopenStream, n_samlpes_to_skip: int = 0, buffer_size: int = 1048576
 ) -> Generator[Sample, None, None]:
-    # `webdataset.gopen` opens anything in the binary mode.
-    text_stream = io.TextIOWrapper(stream)
+    encoding = locale.getpreferredencoding(False)
 
-    for line in text_stream:
-        line = line.strip()
-        if line:
-            if n_samples_to_skip > 0:
-                n_samples_to_skip -= 1
-            else:
-                yield json.loads(line)
+    # We cannot use `io.TextIOWrapper`, because `webdataset.gopen.Pipe` does not fully implement
+    # the IO protocol.
+    buffer = b""
+    eol = b"\n"
+
+    while True:
+        while eol not in buffer:
+            chunk = stream.read(buffer_size)
+
+            # EOF
+            if not chunk:
+                if buffer and n_samlpes_to_skip == 0:
+                    yield json.loads(buffer.decode(encoding))
+                return
+
+            buffer += chunk
+
+        line, buffer = buffer.split(eol, 1)
+
+        if n_samlpes_to_skip > 0:
+            n_samlpes_to_skip -= 1
+        else:
+            yield json.loads(line.decode(encoding))
 
 
 def _deduce_format(url: str) -> FileFormat:
@@ -69,11 +85,11 @@ def yield_samples(
     format: FileFormat = "auto",
     n_samples_to_skip: int = 0,
 ) -> Generator[Sample, None, None]:
-    url = _convert_url(url)
-    print(str)
     if format == "auto":
         format = _deduce_format(url)
     format = format.lower()  # type: ignore
+
+    url = _convert_url(url)
 
     # We need to call `gopen` here, not in the actual generators. This is because we want to
     # immediately start the read process for prefetching.

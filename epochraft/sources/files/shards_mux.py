@@ -76,6 +76,9 @@ class ShardsMux(CheckpointableIterator):
         )
         self.standby_shards: deque[ShardReader] = deque()
 
+        # Start the prefetching
+        self._refill_active_shards()
+
     def _refill_standby_shards(self) -> None:
         while len(self.active_shards) + len(self.standby_shards) < self.n_open_shards:
             epoch, index = self.next_standby_shard
