@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import io
 import json
 import locale
 from typing import IO, BinaryIO, Generator, Union
