@@ -1,26 +1,24 @@
 from __future__ import annotations
 
+import io
 import json
-from logging import getLogger
-from typing import Generator
+from typing import IO, BinaryIO, Generator, Union
 
 import webdataset
+from webdataset.gopen import Pipe
 
 from ...base import FileFormat, Sample
 
 
-logger = getLogger()
-
-ENCODING = "utf-8"
+# Return type of `webdataset.gopen`
+GopenStream = Union[Pipe, IO[bytes], BinaryIO]
 
 
 def _yield_samples_cbor(
-    url: str,
+    stream: GopenStream,
     n_samples_to_skip: int = 0,
 ) -> Generator[Sample, None, None]:
     import cbor2
-
-    stream = webdataset.gopen(url)
 
     try:
         while True:
@@ -34,30 +32,18 @@ def _yield_samples_cbor(
 
 
 def _yield_samples_jsonl(
-    url: str, n_samlpes_to_skip: int = 0, buffer_size: int = 1048576
+    stream: GopenStream, n_samples_to_skip: int = 0
 ) -> Generator[Sample, None, None]:
-    pipe = webdataset.gopen(url)
-    buffer = b""
-    eol = b"\n"
+    # `webdataset.gopen` opens anything in the binary mode.
+    text_stream = io.TextIOWrapper(stream)
 
-    while True:
-        while eol not in buffer:
-            chunk = pipe.read(buffer_size)
-
-            # EOF
-            if not chunk:
-                if buffer and n_samlpes_to_skip == 0:
-                    yield json.loads(buffer.decode(ENCODING))
-                return
-
-            buffer += chunk
-
-        line, buffer = buffer.split(eol, 1)
-
-        if n_samlpes_to_skip > 0:
-            n_samlpes_to_skip -= 1
-        else:
-            yield json.loads(line.decode(ENCODING))
+    for line in text_stream:
+        line = line.strip()
+        if line:
+            if n_samples_to_skip > 0:
+                n_samples_to_skip -= 1
+            else:
+                yield json.loads(line)
 
 
 def _deduce_format(url: str) -> FileFormat:
@@ -67,7 +53,7 @@ def _deduce_format(url: str) -> FileFormat:
     elif url.endswith(".jsonl"):
         return "jsonl"
     else:
-        raise ValueError(f"Unknown format for {url}")
+        raise ValueError(f"Could not deduce format from url: {url}")
 
 
 def yield_samples(
@@ -79,9 +65,13 @@ def yield_samples(
         format = _deduce_format(url)
     format = format.lower()  # type: ignore
 
+    # We need to call `gopen` here, not in the actual generators. This is because we want to
+    # immediately start the read process for prefetching.
+    stream: GopenStream = webdataset.gopen(url)
+
     if format == "jsonl":
-        return _yield_samples_jsonl(url, n_samples_to_skip)
+        return _yield_samples_jsonl(stream, n_samples_to_skip)
     elif format == "cbor":
-        return _yield_samples_cbor(url, n_samples_to_skip)
+        return _yield_samples_cbor(stream, n_samples_to_skip)
     else:
         raise ValueError(f"Unknown format: {format}")
