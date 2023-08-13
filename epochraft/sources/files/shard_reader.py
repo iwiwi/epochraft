@@ -33,7 +33,9 @@ class ShardReader(CheckpointableIterator):
         self.wait_time_multiplier = wait_time_multiplier
 
         self.n_samples_yielded = n_samples_yielded
-        self.iter = yield_samples(url, format, self.n_samples_yielded)
+        self.iter = yield_samples(
+            url, format, self.n_samples_yielded
+        )  # TODO: no error handling for this
 
     def __next__(self) -> Sample:
         # For exponential backoff
