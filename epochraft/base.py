@@ -253,26 +253,19 @@ class CheckpointableDataset(torch.utils.data.IterableDataset, abc.ABC):
         ordered: bool = True,
         executor_type: ParallelExecutorType = "process",
     ) -> CheckpointableDataset:
-        tokenizer_kwargs = tokenizer_kwargs or {}
+        from .transforms import tokenize
 
-        def _fn(sample: Sample) -> Sample:
-            sample = sample.copy()
-            sample.update(tokenizer(sample[target_column], **tokenizer_kwargs))
-            return sample
-
-        if parallel:
-            # TODO: show some warning on this
-            os.environ["TOKENIZERS_PARALLELISM"] = "false"
-
-            return self.parallel_map(
-                _fn,
-                max_workers=max_workers,
-                prefetch_factor=prefetch_factor,
-                ordered=ordered,
-                executor_type=executor_type,
-            )
-        else:
-            return self.map(_fn)
+        return tokenize(
+            source=self,
+            tokenizer=tokenizer,
+            tokenizer_kwargs=tokenizer_kwargs,
+            target_column=target_column,
+            parallel=parallel,
+            max_workers=max_workers,
+            prefetch_factor=prefetch_factor,
+            ordered=ordered,
+            executor_type=executor_type,
+        )
 
     def add_bos_eos(
         self,

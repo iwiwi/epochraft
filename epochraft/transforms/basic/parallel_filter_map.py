@@ -3,11 +3,17 @@ from __future__ import annotations
 import concurrent.futures
 import functools
 import itertools
+import multiprocessing
 import os
+import threading
 import uuid
 from collections import deque
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from contextlib import contextmanager
+from logging import getLogger
+from multiprocessing import Process, Queue
+from multiprocessing.context import ForkServerProcess, SpawnProcess
+from threading import Thread
 from typing import Any, Callable, Generator, Iterator, Optional, Type, Union
 
 from ...base import (
@@ -20,86 +26,109 @@ from ...base import (
 )
 
 
-_registered_fns: dict[str, FilterMapFn] = {}
+logger = getLogger(__name__)
+mp_ctx = multiprocessing.get_context("forkserver")  # TODO: customization?
 
 
-def _apply_registered_fn(sample: Sample, fn_name: str) -> Optional[Sample]:
-    callable = _registered_fns[fn_name]
-    return callable(sample)
+class StopToken:
+    pass
 
 
-@contextmanager
-def _register_fn(fn: FilterMapFn) -> Generator[Callable[[Sample], Optional[Sample]], None, None]:
-    name = str(uuid.uuid4())[:8]
-    _registered_fns[name] = fn
-    try:
-        yield functools.partial(_apply_registered_fn, fn_name=name)
-    finally:
-        del _registered_fns[name]
+WorkerClass = Union[Type[Process], Type[Thread], Type[ForkServerProcess], Type[SpawnProcess]]
+WorkerInput = Union[Sample, StopToken]
 
 
-def _get_executor_class(
-    executor_type: ParallelExecutorType,
-) -> Union[Type[ProcessPoolExecutor], Type[ThreadPoolExecutor]]:
+class WorkerResult:
+    error: Optional[Exception]
+    result: Optional[Sample]
+
+    def __init__(self, error: Optional[Exception], result: Optional[Sample]) -> None:
+        self.error = error
+        self.result = result
+
+
+def _get_worker_class(executor_type: str) -> Union[Type[Process], Type[Thread]]:
     if executor_type == "process":
-        return ProcessPoolExecutor
+        # TODO
+        return mp_ctx.Process  # type: ignore
     elif executor_type == "thread":
-        return ThreadPoolExecutor
+        return Thread
     else:
         raise ValueError('Invalid executor_type. Choose either "process" or "thread".')
 
 
-def _imap(
+def _worker(fn: FilterMapFn, rx: Queue[WorkerInput], tx: Queue[WorkerResult]) -> None:
+    process_id = os.getpid()
+    thread_id = threading.get_ident()
+    logger.debug(f"Worker starting. Process ID: {process_id}, Thread ID: {thread_id}.")
+
+    while True:
+        try:
+            item = rx.get()
+            if isinstance(item, StopToken):
+                break
+
+            result = fn(item)
+            tx.put(WorkerResult(error=None, result=result))
+        except Exception as e:
+            tx.put(WorkerResult(error=e, result=None))
+
+    logger.debug(f"Worker ending. Process ID: {process_id}, Thread ID: {thread_id}.")
+
+
+def _imap_ordered(
     fn: FilterMapFn,
     source: Iterator[Sample],
-    max_workers: Optional[int],
+    max_workers: int,
     queue_len: int,
-    executor_type: ParallelExecutorType,
+    executor_type: str,
 ) -> Generator[Optional[Sample], None, None]:
-    executor_class = _get_executor_class(executor_type)
+    worker_class = _get_worker_class(executor_type)
 
-    with executor_class(max_workers=max_workers) as executor:
-        # Submit initial tasks
-        futures = deque(executor.submit(fn, x) for x in itertools.islice(source, queue_len))
+    workers = []
+    try:
+        logger.debug(f"Starting {max_workers} workers. This may take some time.")
+        for _ in range(max_workers):
+            worker_queue_len = queue_len // max_workers + 1
+            rx: Queue[WorkerInput] = mp_ctx.Queue(worker_queue_len)
+            tx: Queue[WorkerResult] = mp_ctx.Queue(worker_queue_len)
+            worker = worker_class(target=_worker, args=(fn, rx, tx))
+            worker.start()
+            workers.append((worker, rx, tx))
 
-        # Loop over tasks as they complete
-        while futures:
-            done = futures.popleft()
-            yield done.result()
+        # Sample index to read and put
+        get_index = 0
+        put_index = 0
+
+        # Fill the queues
+        for x in itertools.islice(source, queue_len):
+            _, rx, _ = workers[put_index % max_workers]
+            rx.put(x)
+            put_index += 1
+
+        # Read from the queues
+        while get_index < put_index:
+            _, _, tx = workers[get_index % max_workers]
+            result = tx.get()
+            if result.error:
+                raise result.error
+            yield result.result
+            get_index += 1
+
+            _, rx, _ = workers[put_index % max_workers]
             try:
-                futures.append(executor.submit(fn, next(source)))
+                rx.put(next(source))
+                put_index += 1
             except StopIteration:
                 # All tasks submitted, just wait for them to complete
-                pass
-
-
-def _imap_unordered(
-    fn: FilterMapFn,
-    source: Iterator[Sample],
-    max_workers: Optional[int],
-    queue_len: int,
-    executor_type: ParallelExecutorType,
-) -> Generator[Optional[Sample], None, None]:
-    executor_class = _get_executor_class(executor_type)
-
-    with executor_class(max_workers=max_workers) as executor:
-        # Submit initial tasks
-        futures = {executor.submit(fn, x) for x in itertools.islice(source, queue_len)}
-
-        while futures:
-            # Wait for the first future to complete
-            done, futures = concurrent.futures.wait(
-                futures, return_when=concurrent.futures.FIRST_COMPLETED
-            )
-            for future in done:
-                yield future.result()
-
-                # Try to add new tasks
-                try:
-                    futures.add(executor.submit(fn, next(source)))
-                except StopIteration:
-                    # All tasks submitted, just wait for them to complete
-                    pass
+                continue
+    finally:
+        logger.debug(f"Terminating {max_workers} workers.")
+        # Ensure all started workers are signaled to stop and waited on
+        for _, rx, _ in workers:
+            rx.put(StopToken())
+        for worker, _, _ in workers:
+            worker.join()
 
 
 class ParallelFilterMapIterator(CheckpointableIterator):
@@ -127,24 +156,23 @@ class ParallelFilterMapIterator(CheckpointableIterator):
         # In the edge case where `state_dict` (and thus `_close`) is called before `next`,
         # `_source_iter` cannot be closed properly.
 
-        with _register_fn(self.dataset.fn) as fn:
-            if self.dataset.ordered:
-                it = _imap(
-                    fn,
-                    self._source_iter(),
-                    self.dataset.max_workers,
-                    self.dataset.queue_len,
-                    self.dataset.executor_type,
-                )
-            else:
-                it = _imap_unordered(
-                    fn,
-                    self._source_iter(),
-                    self.dataset.max_workers,
-                    self.dataset.queue_len,
-                    self.dataset.executor_type,
-                )
-            yield from itertools.chain(unconsumed_outputs, it)
+        if self.dataset.ordered:
+            it = _imap_ordered(
+                self.dataset.fn,
+                self._source_iter(),
+                self.dataset.max_workers,
+                self.dataset.queue_len,
+                self.dataset.executor_type,
+            )
+        else:
+            it = _imap_unordered(
+                self.dataset.fn,
+                self._source_iter(),
+                self.dataset.max_workers,
+                self.dataset.queue_len,
+                self.dataset.executor_type,
+            )
+        yield from itertools.chain(unconsumed_outputs, it)
 
     def __next__(self) -> Sample:
         while True:
