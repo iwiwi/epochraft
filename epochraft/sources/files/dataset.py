@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Optional, Sequence, Union
 
-import webdataset
+import braceexpand
 
 from ...base import CheckpointableDataset, CheckpointableIterator, FileFormat, StateDict
 from .shards_mux import ShardsMux
@@ -19,7 +19,10 @@ class FilesDataset(CheckpointableDataset):
         n_standby_shards: int,
         seed: int,
     ) -> None:
-        self.urls: list[str] = webdataset.shardlists.expand_urls(urls)
+        if isinstance(urls, str):
+            urls = [urls]
+        self.urls: list[str] = sum((list(braceexpand.braceexpand(url)) for url in urls), [])
+
         self.format = format
         self.n_acive_shards = n_active_shards
         self.n_standby_shards = n_standby_shards
