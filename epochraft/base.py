@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import abc
-import os
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -31,6 +30,8 @@ Sample = Dict[str, Any]
 StateDict = Dict[str, Any]
 TokenArray = Union[List[int], np.ndarray, torch.Tensor]
 FilterMapFn = Callable[[Sample], Optional[Sample]]
+MapFn = Callable[[Sample], Sample]
+FilterFn = Callable[[Sample], bool]
 CollateFn = Callable[[List[Sample]], Sample]
 ParallelExecutorType = Literal["process", "thread"]
 FileFormat = Literal["auto", "jsonl", "cbor"]
@@ -166,11 +167,10 @@ class CheckpointableDataset(torch.utils.data.IterableDataset, abc.ABC):
         ordered: bool = True,
         executor_type: ParallelExecutorType = "process",
     ) -> CheckpointableDataset:
-        from .transforms import ParallelFilterMapDataset
+        from .transforms.basic.filter_map import adapt_map_fn
 
-        return ParallelFilterMapDataset(
-            self,
-            fn,
+        return self.parallel_filter_map(
+            adapt_map_fn(fn),
             max_workers=max_workers,
             prefetch_factor=prefetch_factor,
             ordered=ordered,
@@ -179,20 +179,16 @@ class CheckpointableDataset(torch.utils.data.IterableDataset, abc.ABC):
 
     def parallel_filter(
         self,
-        fn: Callable[[Sample], bool],
+        fn: FilterFn,
         max_workers: Optional[int] = None,
         prefetch_factor: int = 10,
         ordered: bool = True,
         executor_type: ParallelExecutorType = "process",
     ) -> CheckpointableDataset:
-        from .transforms import ParallelFilterMapDataset
+        from .transforms.basic.filter_map import adapt_filter_fn
 
-        def _fn(sample: Sample) -> Optional[Sample]:
-            return sample if fn(sample) else None
-
-        return ParallelFilterMapDataset(
-            self,
-            _fn,
+        return self.parallel_filter_map(
+            adapt_filter_fn(fn),
             max_workers=max_workers,
             prefetch_factor=prefetch_factor,
             ordered=ordered,

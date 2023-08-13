@@ -1,20 +1,14 @@
 from __future__ import annotations
 
-import concurrent.futures
-import functools
 import itertools
 import multiprocessing
 import os
 import threading
-import uuid
-from collections import deque
-from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
-from contextlib import contextmanager
 from logging import getLogger
 from multiprocessing import Process, Queue
 from multiprocessing.context import ForkServerProcess, SpawnProcess
 from threading import Thread
-from typing import Any, Callable, Generator, Iterator, Optional, Type, Union
+from typing import Any, Generator, Iterator, Optional, Type, Union
 
 from ...base import (
     CheckpointableDataset,
@@ -47,10 +41,9 @@ class WorkerResult:
         self.result = result
 
 
-def _get_worker_class(executor_type: str) -> Union[Type[Process], Type[Thread]]:
+def _get_worker_class(executor_type: str) -> WorkerClass:
     if executor_type == "process":
-        # TODO
-        return mp_ctx.Process  # type: ignore
+        return mp_ctx.Process
     elif executor_type == "thread":
         return Thread
     else:
@@ -92,7 +85,7 @@ def _imap_ordered(
             worker_queue_len = queue_len // max_workers + 1
             rx: Queue[WorkerInput] = mp_ctx.Queue(worker_queue_len)
             tx: Queue[WorkerResult] = mp_ctx.Queue(worker_queue_len)
-            worker = worker_class(target=_worker, args=(fn, rx, tx))
+            worker = worker_class(target=_worker, args=(fn, rx, tx), daemon=True)
             worker.start()
             workers.append((worker, rx, tx))
         logger.debug(f"Started {max_workers} workers.")
@@ -125,14 +118,76 @@ def _imap_ordered(
                 continue
     finally:
         logger.debug(f"Terminating {max_workers} workers.")
-        for worker, _, _ in workers:
-            worker.terminate()
+        if executor_type == "process":
+            for worker, _, _ in workers:
+                assert not isinstance(worker, Thread)
+                worker.terminate()
+        else:
+            # Thread does not have terminate method
+            for _, rx, _ in workers:
+                rx.put(StopToken())
+            for worker, _, _ in workers:
+                worker.join()
+
         logger.debug(f"Terminated {max_workers} workers.")
 
-        # for _, rx, _ in workers:
-        #    rx.put(StopToken())
-        # for worker, _, _ in workers:
-        #    worker.join()
+
+def _imap_unordered(
+    fn: FilterMapFn,
+    source: Iterator[Sample],
+    max_workers: int,
+    queue_len: int,
+    executor_type: str,
+) -> Generator[Optional[Sample], None, None]:
+    worker_class = _get_worker_class(executor_type)
+    rx: Queue[WorkerInput] = mp_ctx.Queue(queue_len + 1)
+    tx: Queue[WorkerResult] = mp_ctx.Queue(queue_len + 1)
+
+    workers = []
+    try:
+        logger.debug(f"Starting {max_workers} workers. This may take some time.")
+        for _ in range(max_workers):
+            worker = worker_class(target=_worker, args=(fn, rx, tx))
+            worker.start()
+            workers.append((worker, rx, tx))
+        logger.debug(f"Started {max_workers} workers.")
+
+        get_index = 0
+        put_index = 0
+
+        # Fill the queues
+        for x in itertools.islice(source, queue_len):
+            rx.put(x)
+            put_index += 1
+
+        # Read from the queues
+        while get_index < put_index:
+            result = tx.get()
+            if result.error:
+                raise result.error
+            yield result.result
+            get_index += 1
+
+            try:
+                rx.put(next(source))
+                put_index += 1
+            except StopIteration:
+                # All tasks submitted, just wait for them to complete
+                continue
+    finally:
+        logger.debug(f"Terminating {max_workers} workers.")
+        if executor_type == "process":
+            for worker, _, _ in workers:
+                assert not isinstance(worker, Thread)
+                worker.terminate()
+        else:
+            # Thread does not have terminate method
+            for _, rx, _ in workers:
+                rx.put(StopToken())
+            for worker, _, _ in workers:
+                worker.join()
+
+        logger.debug(f"Terminated {max_workers} workers.")
 
 
 class ParallelFilterMapIterator(CheckpointableIterator):
@@ -247,14 +302,3 @@ class ParallelFilterMapDataset(CheckpointableDataset):
             source_state_dict = None
         iter = self.source.iter(state_dict=source_state_dict)
         return ParallelFilterMapIterator(iter, self, unconsumed_outputs)
-
-
-def _map_fn(sample: Sample, map_fn: Callable[[Sample], Sample]) -> Sample:
-    sample = map_fn(sample)
-    if sample is None:
-        raise ValueError("map_fn must not return None")
-    return sample
-
-
-def filter_map_fn_from_map_fn(map_fn: Callable[[Sample], Sample]):
-    return functools.partial(_map_fn, map_fn=map_fn)

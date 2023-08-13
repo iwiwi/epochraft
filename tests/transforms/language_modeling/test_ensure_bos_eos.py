@@ -63,7 +63,9 @@ SAMPLES = [
 def test_ensure_bos_eos_neox() -> None:
     tokenizer = AutoTokenizer.from_pretrained("EleutherAI/gpt-neox-20b")
     outputs = list(
-        CheckpointableDataset.from_sequence(SAMPLES).tokenize(tokenizer).ensure_bos_eos(tokenizer)
+        CheckpointableDataset.from_sequence(SAMPLES)
+        .tokenize(tokenizer, max_workers=2)
+        .ensure_bos_eos(tokenizer)
     )
 
     assert len(outputs) == 3
@@ -83,7 +85,9 @@ def test_ensure_bos_eos_neox() -> None:
 def test_ensure_bos_eos_novelai() -> None:
     tokenizer = LlamaTokenizer.from_pretrained("NovelAI/nerdstash-tokenizer-v1")
     outputs = list(
-        CheckpointableDataset.from_sequence(SAMPLES).tokenize(tokenizer).ensure_bos_eos(tokenizer)
+        CheckpointableDataset.from_sequence(SAMPLES)
+        .tokenize(tokenizer, max_workers=2)
+        .ensure_bos_eos(tokenizer)
     )
 
     assert len(outputs) == 3

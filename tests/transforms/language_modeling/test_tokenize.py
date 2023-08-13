@@ -18,7 +18,9 @@ SAMPLES = [
 
 def test_tokenize() -> None:
     tokenizer = AutoTokenizer.from_pretrained("EleutherAI/gpt-neox-20b")
-    samples_tokenized = list(CheckpointableDataset.from_sequence(SAMPLES).tokenize(tokenizer))
+    samples_tokenized = list(
+        CheckpointableDataset.from_sequence(SAMPLES).tokenize(tokenizer, max_workers=2)
+    )
 
     assert len(samples_tokenized) == 3
     for sample in samples_tokenized:
@@ -33,7 +35,7 @@ def test_tokenize_return_pt() -> None:
     tokenizer = AutoTokenizer.from_pretrained("EleutherAI/gpt-neox-20b")
     samples_tokenized = list(
         CheckpointableDataset.from_sequence(SAMPLES).tokenize(
-            tokenizer, tokenizer_kwargs={"return_tensors": "pt"}
+            tokenizer, tokenizer_kwargs={"return_tensors": "pt"}, max_workers=2
         )
     )
 
@@ -61,7 +63,7 @@ def test_tokenize_concat_chunk(tokenizer_kwargs: Optional[dict]) -> None:
     tokenizer = AutoTokenizer.from_pretrained("EleutherAI/gpt-neox-20b")
     out_samples = list(
         CheckpointableDataset.from_sequence(SAMPLES)
-        .tokenize(tokenizer, tokenizer_kwargs=tokenizer_kwargs)
+        .tokenize(tokenizer, tokenizer_kwargs=tokenizer_kwargs, max_workers=2)
         .concat_chunk(chunk_length=chunk_length)
     )
     assert len(out_samples) > 0
