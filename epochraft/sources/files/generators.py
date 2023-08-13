@@ -26,7 +26,7 @@ def _is_text(format: FileFormat) -> bool:
     return format in ["jsonl"]
 
 
-def generate_from_jsonl_stream(
+def generate_from_stream_jsonl(
     url: str,
     stream: IO[str],
     stream_check_fn: Callable[[], None],
@@ -65,7 +65,7 @@ def generate_from_jsonl_stream(
                 f"Decoding error encountered on line {line_count} of URL {url}. "
                 f"Skipping this line and moving on to the next. "
                 f"This is error {n_consecutive_errors}/{max_consecutive_errors} in a row. "
-                f"If {max_consecutive_errors} consecutive errors occur, this generator will be aborted."
+                f"If {max_consecutive_errors} consecutive errors occur, it will be aborted."
             )
             logger.debug(
                 f"Content of the problematic line (line={line_count}, url={url}):\n"
@@ -76,11 +76,33 @@ def generate_from_jsonl_stream(
             if n_consecutive_errors >= max_consecutive_errors:
                 # TODO: we probably don't need to retry for this error
                 raise ValueError(
-                    f"Encountered {max_consecutive_errors} consecutive decoding errors for URL {url}. "
-                    f"Terminating the generator."
+                    f"Encountered {max_consecutive_errors} consecutive decoding errors "
+                    f"for URL {url}. Terminating the generator."
                 )
 
     logger.debug(f"JSONL EOF: line={line_count}, url={url}")
+
+
+def generate_form_stream_cbor(
+    url: str,
+    stream: IO[str],
+    stream_check_fn: Callable[[], None],
+    n_samples_to_skip: int,
+) -> Generator[Sample, None, None]:
+    import cbor2
+
+    try:
+        while True:
+            stream_check_fn()
+            sample = cbor2.load(stream)
+            stream_check_fn()
+
+            if n_samples_to_skip > 0:
+                n_samples_to_skip -= 1
+            else:
+                yield sample
+    except EOFError:
+        stream_check_fn()
 
 
 def generate_from_stream(
@@ -91,10 +113,9 @@ def generate_from_stream(
     n_samples_to_skip: int,
 ) -> Generator[Sample, None, None]:
     if format == "jsonl":
-        yield from generate_from_jsonl_stream(url, stream, stream_check_fn, n_samples_to_skip)
+        yield from generate_from_stream_jsonl(url, stream, stream_check_fn, n_samples_to_skip)
     elif format == "cbor":
-        # TODO!!
-        raise NotImplemented()
+        yield from generate_form_stream_cbor(url, stream, stream_check_fn, n_samples_to_skip)
     else:
         raise ValueError(f"Unknwon format: {format}")
 
