@@ -95,6 +95,7 @@ def _imap_ordered(
             worker = worker_class(target=_worker, args=(fn, rx, tx))
             worker.start()
             workers.append((worker, rx, tx))
+        logger.debug(f"Started {max_workers} workers.")
 
         # Sample index to read and put
         get_index = 0
@@ -124,11 +125,14 @@ def _imap_ordered(
                 continue
     finally:
         logger.debug(f"Terminating {max_workers} workers.")
-        # Ensure all started workers are signaled to stop and waited on
-        for _, rx, _ in workers:
-            rx.put(StopToken())
         for worker, _, _ in workers:
-            worker.join()
+            worker.terminate()
+        logger.debug(f"Terminated {max_workers} workers.")
+
+        # for _, rx, _ in workers:
+        #    rx.put(StopToken())
+        # for worker, _, _ in workers:
+        #    worker.join()
 
 
 class ParallelFilterMapIterator(CheckpointableIterator):
@@ -243,3 +247,14 @@ class ParallelFilterMapDataset(CheckpointableDataset):
             source_state_dict = None
         iter = self.source.iter(state_dict=source_state_dict)
         return ParallelFilterMapIterator(iter, self, unconsumed_outputs)
+
+
+def _map_fn(sample: Sample, map_fn: Callable[[Sample], Sample]) -> Sample:
+    sample = map_fn(sample)
+    if sample is None:
+        raise ValueError("map_fn must not return None")
+    return sample
+
+
+def filter_map_fn_from_map_fn(map_fn: Callable[[Sample], Sample]):
+    return functools.partial(_map_fn, map_fn=map_fn)

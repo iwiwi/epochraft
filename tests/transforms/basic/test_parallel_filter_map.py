@@ -18,58 +18,70 @@ parameterize_parallel_config = pytest.mark.parametrize(
 )
 
 
+def _map_fn(sample: Sample) -> Sample:
+    return {"id": sample["id"] * 2}
+
+
 @parameterize_parallel_config
 def test_parallel_map(
     max_workers: int, prefetch_factor: int, executor_type: ParallelExecutorType
 ) -> None:
-    def fn(sample: Sample) -> Sample:
-        return {"id": sample["id"] * 2}
-
     samples = testing.generate_example_sequence()
     dataset = CheckpointableDataset.from_sequence(samples).parallel_map(
-        fn, max_workers=max_workers, prefetch_factor=prefetch_factor, executor_type=executor_type
+        _map_fn,
+        max_workers=max_workers,
+        prefetch_factor=prefetch_factor,
+        executor_type=executor_type,
     )
     samples_generated = list(dataset)
 
     # Should generate the same samples
-    assert samples_generated == list(map(fn, samples))
+    assert samples_generated == list(map(_map_fn, samples))
+
+
+def _filter_fn(sample: Sample) -> bool:
+    return sample["id"] % 2 == 0  # type: ignore
 
 
 @parameterize_parallel_config
 def test_parallel_filter(
     max_workers: int, prefetch_factor: int, executor_type: ParallelExecutorType
 ) -> None:
-    def fn(sample: Sample) -> bool:
-        return sample["id"] % 2 == 0  # type: ignore
-
     samples = testing.generate_example_sequence()
     dataset = CheckpointableDataset.from_sequence(samples).parallel_filter(
-        fn, max_workers=max_workers, prefetch_factor=prefetch_factor, executor_type=executor_type
+        _filter_fn,
+        max_workers=max_workers,
+        prefetch_factor=prefetch_factor,
+        executor_type=executor_type,
     )
     samples_generated = list(dataset)
 
     # Should generate the same samples
-    assert samples_generated == list(filter(fn, samples))
+    assert samples_generated == list(filter(_filter_fn, samples))
+
+
+def _filter_map_fn(sample: Sample) -> Optional[Sample]:
+    if sample["id"] % 2 == 0:
+        return {"id": sample["id"] * 3}
+    else:
+        return None
 
 
 @parameterize_parallel_config
 def test_parallel_filter_map(
     max_workers: int, prefetch_factor: int, executor_type: ParallelExecutorType
 ) -> None:
-    def fn(sample: Sample) -> Optional[Sample]:
-        if sample["id"] % 2 == 0:
-            return {"id": sample["id"] * 3}
-        else:
-            return None
-
     samples = testing.generate_example_sequence()
     dataset = CheckpointableDataset.from_sequence(samples).parallel_filter_map(
-        fn, max_workers=max_workers, prefetch_factor=prefetch_factor, executor_type=executor_type
+        _filter_map_fn,
+        max_workers=max_workers,
+        prefetch_factor=prefetch_factor,
+        executor_type=executor_type,
     )
     samples_generated = list(dataset)
 
     # Should generate the same samples
-    samples_expected = list(filter(None, map(fn, samples)))
+    samples_expected = list(filter(None, map(_filter_map_fn, samples)))
     assert samples_generated == samples_expected
 
 
@@ -77,15 +89,9 @@ def test_parallel_filter_map(
 def test_unorderd_parallel_filter_map(
     max_workers: int, prefetch_factor: int, executor_type: ParallelExecutorType
 ) -> None:
-    def fn(sample: Sample) -> Optional[Sample]:
-        if sample["id"] % 2 == 0:
-            return {"id": sample["id"] * 3}
-        else:
-            return None
-
     samples = testing.generate_example_sequence()
     dataset = CheckpointableDataset.from_sequence(samples).parallel_filter_map(
-        fn,
+        _filter_map_fn,
         max_workers=max_workers,
         prefetch_factor=prefetch_factor,
         executor_type=executor_type,
@@ -96,7 +102,7 @@ def test_unorderd_parallel_filter_map(
     samples_generated = sorted(dataset, key=lambda x: x["id"])
 
     # Should generate the same samples
-    samples_expected = list(filter(None, map(fn, samples)))
+    samples_expected = list(filter(None, map(_filter_map_fn, samples)))
     assert samples_generated == samples_expected
 
 
@@ -104,17 +110,14 @@ def test_unorderd_parallel_filter_map(
 def test_parallel_filter_map_checkpointing(
     max_workers: int, prefetch_factor: int, executor_type: ParallelExecutorType
 ) -> None:
-    def fn(sample: Sample) -> Optional[Sample]:
-        if sample["id"] % 2 == 0:
-            return {"id": sample["id"] * 3}
-        else:
-            return None
-
     samples = testing.generate_example_sequence()
     dataset = CheckpointableDataset.from_sequence(
         samples, repeat=True, shuffle=True
     ).parallel_filter_map(
-        fn, max_workers=max_workers, prefetch_factor=prefetch_factor, executor_type=executor_type
+        _filter_map_fn,
+        max_workers=max_workers,
+        prefetch_factor=prefetch_factor,
+        executor_type=executor_type,
     )
 
     testing.check_resumption(dataset, dataset, 0)
