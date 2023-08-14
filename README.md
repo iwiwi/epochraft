@@ -38,7 +38,7 @@ In training for 1 epoch, it's necessary to ensure that the data loader can conti
 
 Epochraft is designed with the aim of achieving both on-the-fly tokenization and checkpointing. Neither on-the-fly tokenization nor checkpointing are exceptionally difficult features in themselves. However, when attempting to realize both simultaneously, significant constraints arise at the core of the design. That's why no existing libraries are compatible with both features.
 
-In Epochraft, a variety of existing datasets can be used as sources, so it supports a wide range of data formats. Particularly, when using [MosaicML Streaming](https://github.com/mosaicml/streaming) as a source, you can train directly by streaming data from S3,
+In Epochraft, a variety of existing datasets can be used as sources, so it supports a wide range of data formats. Particularly, when you are using the native file loading implementation, you can train directly by streaming data from S3,
 and resumption is efficient.
 
 As Epochraft is a library focused on the training of LLMs, it is equipped with features that are necessary for pretraining and SFT of LLMs. Operations like tokenization and chunking are available out of the box. Additionally, tokenization is performed efficiently using multi-processes.
