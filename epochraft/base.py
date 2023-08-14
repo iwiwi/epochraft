@@ -103,8 +103,8 @@ class CheckpointableDataset(torch.utils.data.IterableDataset, abc.ABC):
     @staticmethod
     def from_files(
         urls: Union[str, Sequence[str]],
-        repeat: bool,
-        shuffle_shards: bool,
+        repeat: bool = False,
+        shuffle_shards: bool = False,
         format: FileFormat = "auto",
         n_active_shards: int = 10,
         n_standby_shards: int = 4,
