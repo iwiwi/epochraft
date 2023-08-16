@@ -46,7 +46,7 @@ def test_chunk_drop_remainder_false() -> None:
     assert chunks[7]["input_ids"].tolist() == [12]
 
 
-def test_pack_chunk_resumption() -> None:
+def test_chunk_resumption() -> None:
     dataset = CheckpointableDataset.from_sequence(SAMPLES, repeat=True, shuffle=True).chunk(5)
 
     testing.check_resumption(dataset, dataset, 0)
@@ -56,7 +56,7 @@ def test_pack_chunk_resumption() -> None:
     testing.check_resumption(dataset, dataset, 123)
 
 
-def test_pack_chunk_resumption_drop_remainder_false() -> None:
+def test_chunk_resumption_drop_remainder_false() -> None:
     dataset = CheckpointableDataset.from_sequence(SAMPLES, repeat=True, shuffle=True).chunk(
         5, drop_remainder=False
     )
