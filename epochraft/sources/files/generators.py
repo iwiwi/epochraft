@@ -143,7 +143,7 @@ def generate_by_popen(
     format: FileFormat,
     n_samples_to_skip: int,
 ) -> Generator[Sample, None, None]:
-    # We would like to eargerly evaluate Popen
+    # We would like to eagerly evaluate Popen
     proc = subprocess.Popen(command, stdout=subprocess.PIPE, text=_is_text(format))
 
     def _check_status() -> None:

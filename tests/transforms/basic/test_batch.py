@@ -30,7 +30,7 @@ def test_batch_drop_last() -> None:
     assert len(batched_data) == 3
     assert len(batched_data[-1]["data"]) == 3
 
-    # Total samples is not divisible by batch_size
+    # Total samples is divisible by batch_size
     sequence = [{"data": torch.tensor(i)} for i in range(9)]
     dataset = CheckpointableDataset.from_sequence(sequence)
 

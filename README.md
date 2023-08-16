@@ -69,7 +69,7 @@ from transformers import AutoTokenizer
 
 tokenizer = AutoTokenizer.from_pretrained("EleutherAI/gpt-neox-20b")
 
-# Various data sources are ssupported. Refer to the explanation below for more details.
+# Various data sources are supported. Refer to the explanation below for more details.
 source = load_dataset("wikitext", "wikitext-103-raw-v1", split="train", streaming=True)
 
 train_dataset = (
