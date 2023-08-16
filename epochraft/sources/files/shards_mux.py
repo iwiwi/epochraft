@@ -50,6 +50,8 @@ class ShardsMux(CheckpointableIterator):
         shuffle: bool,
         n_active_shards: int,
         n_standby_shards: int,
+        timeout: float,
+        n_prefetch_samples: int,
         seed: int,
         next_active_shard: Optional[tuple[int, int]] = None,  # (epoch, index in epoch)
         active_shard_states: Optional[Sequence[StateDict]] = None,
@@ -58,6 +60,8 @@ class ShardsMux(CheckpointableIterator):
         self.format = format
         self.repeat = repeat
         self.shuffle = shuffle
+        self.timeout = timeout
+        self.n_prefetch_samples = n_prefetch_samples
         self.n_active_shards = min(n_active_shards, len(self.urls))
 
         # When we handle the boundary of epochs, we have smaller number of active shards.
@@ -72,7 +76,10 @@ class ShardsMux(CheckpointableIterator):
         self.next_standby_shard = next_active_shard or (0, 0)
 
         self.active_shards = deque(
-            ShardReader.from_state_dict(s) for s in (active_shard_states or [])
+            ShardReader.from_state_dict(
+                state_dict=state_dict, timeout=timeout, n_prefetch_samples=n_prefetch_samples
+            )
+            for state_dict in (active_shard_states or [])
         )
         self.standby_shards: deque[ShardReader] = deque()
 
@@ -94,7 +101,13 @@ class ShardsMux(CheckpointableIterator):
 
             logger.debug(f"New stand-by shard: {url}")
             shard_reader = ShardReader(
-                url, self.format, n_samples_yielded=0, epoch=epoch, index_in_epoch=index
+                url,
+                self.format,
+                timeout=self.timeout,
+                n_prefetch_samples=self.n_prefetch_samples,
+                n_samples_yielded=0,
+                epoch=epoch,
+                index_in_epoch=index,
             )
             self.standby_shards.append((shard_reader))
             self.next_standby_shard = (epoch, index + 1)

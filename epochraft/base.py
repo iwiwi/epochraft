@@ -107,7 +107,9 @@ class CheckpointableDataset(torch.utils.data.IterableDataset, abc.ABC):
         shuffle_shards: bool = False,
         format: FileFormat = "auto",
         n_active_shards: int = 10,
-        n_standby_shards: int = 4,
+        n_standby_shards: int = 2,
+        timeout: float = 60.0,
+        n_prefetch_samples: int = 10,
         seed: int = 42,
     ) -> CheckpointableDataset:
         from .sources import FilesDataset
@@ -119,6 +121,8 @@ class CheckpointableDataset(torch.utils.data.IterableDataset, abc.ABC):
             format=format,
             n_active_shards=n_active_shards,
             n_standby_shards=n_standby_shards,
+            timeout=timeout,
+            n_prefetch_samples=n_prefetch_samples,
             seed=seed,
         )
 

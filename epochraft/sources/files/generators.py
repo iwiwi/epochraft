@@ -187,10 +187,10 @@ def _generator(
 
 def yield_samples(
     url: str,
-    format: FileFormat = "auto",
-    n_samples_to_skip: int = 0,
-    n_prefetch_samples: int = 10,  # TODO: customizable
-    timeout: float = 60.0,  # TODO: customizable
+    format: FileFormat,
+    n_samples_to_skip: int,
+    n_prefetch_samples: int,
+    timeout: float,
 ) -> Generator[Sample, None, None]:
     if format == "auto":
         format = _deduce_format(url)

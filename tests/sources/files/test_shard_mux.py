@@ -17,6 +17,8 @@ def test_shards_mux(jsonl_paths: list[str]) -> None:
         shuffle=False,
         n_active_shards=2,
         n_standby_shards=1,
+        timeout=10.0,
+        n_prefetch_samples=4,
         seed=42,
     )
     samples = list(it)
@@ -41,6 +43,8 @@ def test_shards_mux_repeat(jsonl_paths: list[str]) -> None:
         shuffle=False,
         n_active_shards=2,
         n_standby_shards=1,
+        timeout=10.0,
+        n_prefetch_samples=4,
         seed=42,
     )
     n_samples_per_epoch = sum(SAMPLES_PER_FILE)
@@ -68,6 +72,8 @@ def test_shards_mux_shuffle(jsonl_paths: list[str]) -> None:
         shuffle=True,
         n_active_shards=2,
         n_standby_shards=1,
+        timeout=10.0,
+        n_prefetch_samples=4,
         seed=42,
     )
     n_samples_per_epoch = sum(SAMPLES_PER_FILE)
