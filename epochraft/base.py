@@ -248,10 +248,10 @@ class CheckpointableDataset(torch.utils.data.IterableDataset, abc.ABC):
         tokenizer_kwargs: Optional[Dict[str, Any]] = None,
         target_column: str = "text",
         parallel: bool = True,
-        max_workers: Optional[int] = None,
+        max_workers: Optional[int] = 1,
         prefetch_factor: int = 10,
         ordered: bool = True,
-        executor_type: ParallelExecutorType = "process",
+        executor_type: ParallelExecutorType = "thread",
     ) -> CheckpointableDataset:
         from .transforms import tokenize
 
