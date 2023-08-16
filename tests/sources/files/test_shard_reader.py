@@ -19,7 +19,11 @@ def mock_yield_samples() -> Generator[Mock, None, None]:
     error_counts = {2: 2, 3: 1}  # Number of errors for the 2nd and 3rd iterations
 
     def _yield_samples(
-        url: str, format: FileFormat, n_samples_to_skip: int
+        url: str,
+        format: FileFormat,
+        n_samples_to_skip: int,
+        n_prefetch_samples: int,
+        timeout: float,
     ) -> Generator[Sample, None, None]:
         it = iter(list(enumerate(samples))[n_samples_to_skip:])
 
@@ -51,7 +55,15 @@ def test_retry_logic_during_iteration(
     jsonl_paths: list[str], mock_yield_samples: Mock, mock_sleep: Mock
 ) -> None:
     url = jsonl_paths[0]
-    reader = ShardReader(url, format="auto", n_samples_yielded=0, epoch=0, index_in_epoch=0)
+    reader = ShardReader(
+        url,
+        format="auto",
+        timeout=10.0,
+        n_prefetch_samples=2,
+        n_samples_yielded=0,
+        epoch=0,
+        index_in_epoch=0,
+    )
 
     texts = [sample["text"] for sample in list(reader)]
 

@@ -15,6 +15,8 @@ class ShardReader(CheckpointableIterator):
         self,
         url: str,
         format: FileFormat,
+        timeout: float,
+        n_prefetch_samples: int,
         n_samples_yielded: int,
         epoch: int,
         index_in_epoch: int,
@@ -25,6 +27,8 @@ class ShardReader(CheckpointableIterator):
     ):
         self.url = url
         self.format = format
+        self.timeout = timeout
+        self.n_prefetch_samples = n_prefetch_samples
         self.epoch = epoch
         self.index_in_epoch = index_in_epoch
         self.max_retries = max_retries
@@ -34,8 +38,12 @@ class ShardReader(CheckpointableIterator):
 
         self.n_samples_yielded = n_samples_yielded
         self.iter = yield_samples(
-            url, format, self.n_samples_yielded
-        )  # TODO: no error handling for this
+            self.url,
+            self.format,
+            self.n_samples_yielded,
+            self.n_prefetch_samples,
+            self.timeout,
+        )
 
     def __next__(self) -> Sample:
         # For exponential backoff
@@ -59,7 +67,13 @@ class ShardReader(CheckpointableIterator):
                 time.sleep(wait_time)
                 wait_time = min(self.wait_time_max, wait_time * self.wait_time_multiplier)
 
-                self.iter = yield_samples(self.url, self.format, self.n_samples_yielded)
+                self.iter = yield_samples(
+                    self.url,
+                    self.format,
+                    self.n_samples_yielded,
+                    self.n_prefetch_samples,
+                    self.timeout,
+                )
 
         raise Exception(f"Failed to read from {self.url} after {self.max_retries} attempts.")
 
@@ -73,7 +87,11 @@ class ShardReader(CheckpointableIterator):
         }
 
     @staticmethod
-    def from_state_dict(state_dict: StateDict) -> ShardReader:
+    def from_state_dict(
+        state_dict: StateDict,
+        timeout: float,
+        n_prefetch_samples: int,
+    ) -> ShardReader:
         url = state_dict.pop("url")
         format = state_dict.pop("format")
         n_samples_yielded = state_dict.pop("n_samples_yielded")
@@ -86,6 +104,8 @@ class ShardReader(CheckpointableIterator):
             url=url,
             format=format,
             n_samples_yielded=n_samples_yielded,
+            timeout=timeout,
+            n_prefetch_samples=n_prefetch_samples,
             epoch=epoch,
             index_in_epoch=index_in_epoch,
         )

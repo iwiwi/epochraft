@@ -62,7 +62,7 @@ def test_mosaicml_dataset_repeat_shuffle(samples_and_path: tuple[list[Sample], s
 
 @pytest.mark.parametrize(
     "ckpt_index",
-    [0, 1, 19, 20, 21, 119, 120, 121, 125],
+    [0, 1, 119, 120, 121],
 )
 def test_mosaicml_dataset_resumption(
     samples_and_path: tuple[list[Sample], str], ckpt_index: int

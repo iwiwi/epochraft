@@ -30,6 +30,7 @@ dependencies = [
   "torch",
   "numpy",
   "braceexpand",
+  "smart_open",
 ]
 dynamic = ["version"]
 

@@ -17,6 +17,8 @@ class FilesDataset(CheckpointableDataset):
         shuffle_shards: bool,
         n_active_shards: int,
         n_standby_shards: int,
+        timeout: float,
+        n_prefetch_samples: int,
         seed: int,
     ) -> None:
         if isinstance(urls, str):
@@ -26,6 +28,8 @@ class FilesDataset(CheckpointableDataset):
         self.format = format
         self.n_acive_shards = n_active_shards
         self.n_standby_shards = n_standby_shards
+        self.timeout = timeout
+        self.n_prefetch_samples = n_prefetch_samples
         self.repeat = repeat
         self.shuffle_shards = shuffle_shards
         self.seed = seed
@@ -47,6 +51,8 @@ class FilesDataset(CheckpointableDataset):
             shuffle=self.shuffle_shards,
             n_active_shards=self.n_acive_shards,
             n_standby_shards=self.n_standby_shards,
+            timeout=self.timeout,
+            n_prefetch_samples=self.n_prefetch_samples,
             seed=self.seed,
             next_active_shard=next_active_shard,
             active_shard_states=active_shard_states,

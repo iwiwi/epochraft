@@ -1,15 +1,30 @@
 from __future__ import annotations
 
 import json
-import subprocess
-import urllib.parse
+import threading
 from logging import getLogger
-from typing import IO, Any, Callable, Generator
+from queue import Empty, Queue
+from typing import IO, Any, Generator, Optional
+
+import smart_open
 
 from ...base import FileFormat, Sample
 
 
 logger = getLogger(__name__)
+
+
+class ReaderThreadResult:
+    error: Optional[Exception]
+    result: Optional[Sample]
+    end: bool
+
+    def __init__(
+        self, error: Optional[Exception] = None, result: Optional[Sample] = None, end: bool = False
+    ) -> None:
+        self.error = error
+        self.result = result
+        self.end = end
 
 
 def _deduce_format(url: str) -> FileFormat:
@@ -26,19 +41,16 @@ def _is_text(format: FileFormat) -> bool:
     return format in ["jsonl"]
 
 
-def generate_from_stream_jsonl(
+def _generate_from_stream_jsonl(
     url: str,
     stream: IO[str],
-    stream_check_fn: Callable[[], None],
     n_samples_to_skip: int,
     max_consecutive_errors: int = 10,
 ) -> Generator[Sample, None, None]:
     line_count = 0
     n_consecutive_errors = 0
     while True:
-        stream_check_fn()
         line = stream.readline()
-        stream_check_fn()
 
         # EOF
         if not line:
@@ -83,111 +95,123 @@ def generate_from_stream_jsonl(
     logger.debug(f"JSONL EOF: line={line_count}, url={url}")
 
 
-def generate_form_stream_cbor(
+def _generate_form_stream_cbor(
     url: str,
-    stream: IO[str],
-    stream_check_fn: Callable[[], None],
+    stream: IO[bytes],
     n_samples_to_skip: int,
 ) -> Generator[Sample, None, None]:
     import cbor2
 
     try:
         while True:
-            stream_check_fn()
             sample = cbor2.load(stream)
-            stream_check_fn()
 
             if n_samples_to_skip > 0:
                 n_samples_to_skip -= 1
             else:
                 yield sample
     except EOFError:
-        stream_check_fn()
+        pass
 
 
-def generate_from_stream(
+def _generate_from_stream(
     url: str,
     format: FileFormat,
     stream: IO[Any],
-    stream_check_fn: Callable[[], None],
     n_samples_to_skip: int,
 ) -> Generator[Sample, None, None]:
     if format == "jsonl":
-        yield from generate_from_stream_jsonl(url, stream, stream_check_fn, n_samples_to_skip)
+        yield from _generate_from_stream_jsonl(url, stream, n_samples_to_skip)
     elif format == "cbor":
-        yield from generate_form_stream_cbor(url, stream, stream_check_fn, n_samples_to_skip)
+        yield from _generate_form_stream_cbor(url, stream, n_samples_to_skip)
     else:
         raise ValueError(f"Unknwon format: {format}")
 
 
-def generate_by_open(
-    path: str,
+def _reader_thread(
+    url: str,
     format: FileFormat,
     n_samples_to_skip: int,
-) -> Generator[Sample, None, None]:
+    queue: Queue[ReaderThreadResult],
+    finish_event: threading.Event,
+) -> None:
     mode = "r" if _is_text(format) else "rb"
 
-    with open(path, mode) as fp:
-        yield from generate_from_stream(
-            url=path,
-            format=format,
-            stream=fp,
-            stream_check_fn=lambda: None,
-            n_samples_to_skip=n_samples_to_skip,
-        )
-
-
-def generate_by_popen(
-    url: str,
-    command: list[str],
-    format: FileFormat,
-    n_samples_to_skip: int,
-) -> Generator[Sample, None, None]:
-    # We would like to eagerly evaluate Popen
-    proc = subprocess.Popen(command, stdout=subprocess.PIPE, text=_is_text(format))
-
-    def _check_status() -> None:
-        if proc.poll() is not None:
-            if proc.returncode != 0:
-                raise subprocess.CalledProcessError(proc.returncode, proc.args)
-
-    # TODO: potential leak when `_generator()` is called but no element is consumed?
-    def _generator() -> Generator[Sample, None, None]:
-        with proc:
-            assert proc.stdout is not None
-            check_fn = _check_status
-
-            # yield from generate_from_stream(proc.stdout, format, n_samples_to_skip)
-            yield from generate_from_stream(
+    try:
+        logger.debug(f"Read thread starting: url={url}")
+        with smart_open.open(url, mode) as f:
+            gen = _generate_from_stream(
                 url=url,
                 format=format,
-                stream=proc.stdout,
-                stream_check_fn=check_fn,
+                stream=f,
                 n_samples_to_skip=n_samples_to_skip,
             )
+            for sample in gen:
+                if finish_event.is_set():
+                    logger.debug(f"Read thread interrupted: url={url}")
+                    return
+                queue.put(ReaderThreadResult(result=sample))
 
-            retcode = proc.wait()
-            if retcode != 0:
-                raise subprocess.CalledProcessError(retcode, command)
+        logger.debug(f"Read thread completed: url={url}")
+        queue.put(ReaderThreadResult(end=True))
+    except Exception as e:
+        logger.exception(f"Exception in read thread: url={url}")
+        queue.put(ReaderThreadResult(error=e))
 
-    return _generator()
+
+def _generator(
+    thread: threading.Thread,
+    queue: Queue[ReaderThreadResult],
+    finish_event: threading.Event,
+    timeout: float,
+) -> Generator[Sample, None, None]:
+    try:
+        while True:
+            result = queue.get(timeout=timeout)
+            if result.end:
+                break
+            elif result.error:
+                raise result.error
+            else:
+                assert result.result is not None
+                yield result.result
+    finally:
+        finish_event.set()
+        try:
+            while True:
+                queue.get_nowait()
+        except Empty:
+            pass
+        thread.join()
 
 
 def yield_samples(
     url: str,
-    format: FileFormat = "auto",
-    n_samples_to_skip: int = 0,
+    format: FileFormat,
+    n_samples_to_skip: int,
+    n_prefetch_samples: int,
+    timeout: float,
 ) -> Generator[Sample, None, None]:
     if format == "auto":
         format = _deduce_format(url)
     format = format.lower()  # type: ignore
 
-    parsed_url = urllib.parse.urlparse(url)
-    if parsed_url.scheme == "s3":
-        # https://github.com/webdataset/webdataset/issues/21
-        cmd = ["aws", "s3", "cp", url, "-"]
-        yield from generate_by_popen(url, cmd, format, n_samples_to_skip)
-    elif parsed_url.scheme == "":
-        yield from generate_by_open(url, format, n_samples_to_skip)
-    else:
-        raise ValueError(f"Unknown scheme: {parsed_url.scheme} (url: {url})")
+    queue: Queue[ReaderThreadResult] = Queue(n_prefetch_samples)
+    finish_event = threading.Event()
+
+    thread = threading.Thread(
+        target=_reader_thread,
+        daemon=True,
+        kwargs={
+            "url": url,
+            "format": format,
+            "n_samples_to_skip": n_samples_to_skip,
+            "queue": queue,
+            "finish_event": finish_event,
+        },
+    )
+    thread.start()
+
+    # `_generator` should be a different method because we want to launch the thread
+    # before `next` is called on the generator for the first time.
+    return _generator(thread, queue, finish_event, timeout)

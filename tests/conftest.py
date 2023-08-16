@@ -9,4 +9,5 @@ import pytest
 @pytest.fixture(autouse=True)
 def run_gc() -> Generator[None, None, None]:
     gc.collect()
+
     yield
