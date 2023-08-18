@@ -9,9 +9,11 @@ from typing import IO, Any, Generator, Optional
 import smart_open
 
 from ...base import FileFormat, Sample
+from .delay_handler import ProtocolDelayHandler
 
 
 logger = getLogger(__name__)
+delay_handler = ProtocolDelayHandler()
 
 
 class ReaderThreadResult:
@@ -139,6 +141,7 @@ def _reader_thread(
 
     try:
         logger.debug(f"Read thread starting: url={url}")
+        delay_handler(url)
         with smart_open.open(url, mode) as f:
             gen = _generate_from_stream(
                 url=url,
