@@ -118,6 +118,6 @@ def ensure_bos_eos(
         if not behavior.eos_token_added and tokenizer.eos_token:
             eos_token_to_add = tokenizer.eos_token_id
         else:
-            bos_token_to_add = None
+            eos_token_to_add = None
 
         return add_bos_eos(source, bos_token_to_add, eos_token_to_add, target_column)
