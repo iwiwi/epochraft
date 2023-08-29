@@ -4,6 +4,7 @@ import itertools
 import multiprocessing
 import os
 import threading
+import traceback
 from logging import getLogger
 from multiprocessing import Process, Queue
 from multiprocessing.context import ForkServerProcess, SpawnProcess
@@ -33,12 +34,25 @@ WorkerInput = Union[Sample, StopToken]
 
 
 class WorkerResult:
-    error: Optional[Exception]
+    error: Optional[
+        tuple[Exception, str]
+    ]  # (Exception, traceback string) --- The actual traceback is not picklable
     result: Optional[Sample]
 
-    def __init__(self, error: Optional[Exception], result: Optional[Sample]) -> None:
+    def __init__(self, error: Optional[tuple[Exception, str]], result: Optional[Sample]) -> None:
         self.error = error
         self.result = result
+
+    def log_error(self) -> None:
+        assert self.error
+        e, exc_traceback = self.error
+        logger.error(
+            f"Exception in worker: {repr(e)}. The actual traceback is as follows:\n"
+            f"{'=' * 80}\n"
+            f"{exc_traceback}"
+            f"(The exception is going to be raised again, but its traceback can be misleading.)\n"
+            f"{'=' * 80}"
+        )
 
 
 def _get_worker_class(executor_type: str) -> WorkerClass:
@@ -64,7 +78,12 @@ def _worker(fn: FilterMapFn, rx: Queue[WorkerInput], tx: Queue[WorkerResult]) ->
             result = fn(item)
             tx.put(WorkerResult(error=None, result=result))
         except Exception as e:
-            tx.put(WorkerResult(error=e, result=None))
+            logger.exception(
+                f"Exception in worker. Process ID: {process_id}, Thread ID: {thread_id}."
+            )
+            # Traceback objects are not picklable, so we need to convert them to strings
+            exc_traceback = traceback.format_exc()
+            tx.put(WorkerResult(error=(e, exc_traceback), result=None))
 
     logger.debug(f"Worker ending. Process ID: {process_id}, Thread ID: {thread_id}.")
 
@@ -105,7 +124,8 @@ def _imap_ordered(
             _, _, tx = workers[get_index % max_workers]
             result = tx.get()
             if result.error:
-                raise result.error
+                result.log_error()
+                raise result.error[0]
             yield result.result
             get_index += 1
 
@@ -164,7 +184,8 @@ def _imap_unordered(
         while get_index < put_index:
             result = tx.get()
             if result.error:
-                raise result.error
+                result.log_error()
+                raise result.error[0]
             yield result.result
             get_index += 1
 

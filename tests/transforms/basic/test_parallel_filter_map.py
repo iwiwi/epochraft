@@ -10,10 +10,10 @@ parameterize_parallel_config = pytest.mark.parametrize(
     [
         (None, 2, "process"),
         (2, 1, "process"),
-        (4, 10, "process"),
+        (4, 5, "process"),
         (None, 2, "thread"),
         (2, 1, "thread"),
-        (4, 10, "thread"),
+        (4, 5, "thread"),
     ],
 )
 
@@ -123,3 +123,35 @@ def test_parallel_filter_map_checkpointing(
     testing.check_resumption(dataset, dataset, 0)
     testing.check_resumption(dataset, dataset, 1)
     testing.check_resumption(dataset, dataset, 123)
+
+
+class ExampleException(Exception):
+    pass
+
+
+def _map_fn_with_exception(sample: Sample) -> Sample:
+    if sample["id"] >= 10:
+        raise ExampleException()
+    else:
+        return sample
+
+
+@pytest.mark.parametrize(
+    "executor_type, ordered",
+    [
+        ("process", True),
+        ("thread", True),
+        ("process", False),
+        ("thread", False),
+    ],
+)
+def test_parallel_filter_map_exception(executor_type: ParallelExecutorType, ordered: bool) -> None:
+    samples = testing.generate_example_sequence()
+    dataset = CheckpointableDataset.from_sequence(samples).parallel_filter_map(
+        _map_fn_with_exception,
+        max_workers=2,
+        prefetch_factor=1,
+        executor_type=executor_type,
+    )
+    with pytest.raises(ExampleException):
+        list(dataset)
