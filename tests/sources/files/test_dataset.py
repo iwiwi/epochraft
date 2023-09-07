@@ -56,6 +56,11 @@ def test_from_files_repeat(cbor_paths: list[str]) -> None:
         assert file_indices[:6] == [0, 1, 0, 1, 0, 1]
 
 
+def test_from_files_repeat_empty() -> None:
+    with pytest.raises(ValueError):
+        CheckpointableDataset.from_files([], repeat=True)
+
+
 @pytest.mark.parametrize(
     ("n_active_shards", "n_standby_shards"),
     [

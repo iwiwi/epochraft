@@ -25,6 +25,9 @@ class FilesDataset(CheckpointableDataset):
             urls = [urls]
         self.urls: list[str] = sum((list(braceexpand.braceexpand(url)) for url in urls), [])
 
+        if repeat and len(self.urls) == 0:
+            raise ValueError("Cannot repeat an empty dataset, please provide at least one URL.")
+
         self.format = format
         self.n_acive_shards = n_active_shards
         self.n_standby_shards = n_standby_shards
