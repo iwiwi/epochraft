@@ -338,6 +338,13 @@ class CheckpointableDataset(torch.utils.data.IterableDataset, abc.ABC):
             discard_long_samples=discard_long_samples,
         )
 
+    def cache(
+        self,
+    ) -> CheckpointableDataset:
+        from .caching import CacheDataset
+
+        return CacheDataset(self)
+
     # `__add__` is implemented in PyTorch's `IterableDataset`,
     # so we need to override it here for prevent unexpected behavior
     def __add__(self, other: CheckpointableDataset) -> CheckpointableDataset:  # type: ignore
