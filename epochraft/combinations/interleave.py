@@ -49,6 +49,10 @@ class InterleaveIterator(CheckpointableIterator):
         state_dict["index"] = self.index
         return state_dict
 
+    def close(self) -> None:
+        for source in self.sources:
+            source.close()
+
 
 class InterleaveDataset(CheckpointableDataset):
     def __init__(

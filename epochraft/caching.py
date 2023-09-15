@@ -104,6 +104,10 @@ class CacheIterator(CheckpointableIterator):
         }
         return state_dict
 
+    def close(self) -> None:
+        if self.source is not None:
+            self.source.close()
+
 
 class CacheDataset(CheckpointableDataset):
     def __init__(self, source: CheckpointableDataset):

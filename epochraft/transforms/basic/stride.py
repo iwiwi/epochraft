@@ -28,6 +28,9 @@ class StrideIterator(CheckpointableIterator):
             "count": self.count,
         }
 
+    def close(self) -> None:
+        self.source.close()
+
 
 class StrideDataset(CheckpointableDataset):
     def __init__(self, source: CheckpointableDataset, interval: int, offset: int) -> None:

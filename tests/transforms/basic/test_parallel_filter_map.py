@@ -54,7 +54,10 @@ def test_parallel_filter(
         prefetch_factor=prefetch_factor,
         executor_type=executor_type,
     )
-    samples_generated = list(dataset)
+    it = dataset.iter()
+    samples_generated = list(it)
+    it.close()
+    it.close()  # Should be idempotent
 
     # Should generate the same samples
     assert samples_generated == list(filter(_filter_fn, samples))
@@ -78,7 +81,8 @@ def test_parallel_filter_map(
         prefetch_factor=prefetch_factor,
         executor_type=executor_type,
     )
-    samples_generated = list(dataset)
+    with dataset.iter() as it:
+        samples_generated = list(it)
 
     # Should generate the same samples
     samples_expected = list(filter(None, map(_filter_map_fn, samples)))
@@ -130,7 +134,7 @@ class ExampleException(Exception):
 
 
 def _map_fn_with_exception(sample: Sample) -> Sample:
-    if sample["id"] >= 10:
+    if sample["id"] == 10:
         raise ExampleException()
     else:
         return sample

@@ -40,6 +40,9 @@ class ChunkIterator(CheckpointableIterator):
             "buffers": self.queue.buffers.copy(),
         }
 
+    def close(self) -> None:
+        self.source.close()
+
 
 class ChunkDataset(CheckpointableDataset):
     def __init__(

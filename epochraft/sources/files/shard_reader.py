@@ -109,3 +109,7 @@ class ShardReader(CheckpointableIterator):
             epoch=epoch,
             index_in_epoch=index_in_epoch,
         )
+
+    def close(self) -> None:
+        # TODO: Close the underlying file handle
+        pass

@@ -39,6 +39,9 @@ class IterableIterator(CheckpointableIterator):
             "index": self.index,
         }
 
+    def close(self) -> None:
+        pass
+
 
 class IterableDataset(CheckpointableDataset):
     def __init__(

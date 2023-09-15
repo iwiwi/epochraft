@@ -163,3 +163,9 @@ class ShardsMux(CheckpointableIterator):
             "next_active_shard": self._next_active_shard,
             "active_shards": [active_shard.state_dict() for active_shard in self.active_shards],
         }
+
+    def close(self) -> None:
+        for shard in self.active_shards:
+            shard.close()
+        for shard in self.standby_shards:
+            shard.close()
