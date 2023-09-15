@@ -32,6 +32,9 @@ class CountIterator(CheckpointableIterator):
             "count": self.count,
         }
 
+    def close(self) -> None:
+        self.source.close()
+
 
 class CountDataset(CheckpointableDataset):
     def __init__(

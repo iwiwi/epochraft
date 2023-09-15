@@ -38,6 +38,9 @@ class SequenceIterator(CheckpointableIterator):
             "index": self.index,
         }
 
+    def close(self) -> None:
+        pass
+
 
 class SequenceDataset(CheckpointableDataset):
     def __init__(

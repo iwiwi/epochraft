@@ -41,6 +41,11 @@ class MosaicmlIterator(CheckpointableIterator):
             "dataset": self.dataset.source.state_dict(index_in_epoch, from_beginning=True),
         }
 
+    def close(self) -> None:
+        # TODO: Can we do something here...?
+        # Please note that multiple iterators may exist for a dataset.
+        pass
+
 
 class MosaicmlDataset(CheckpointableDataset):
     def __init__(self, source: streaming.StreamingDataset, repeat: bool) -> None:

@@ -67,6 +67,9 @@ class PackChunkIterator(CheckpointableIterator):
             "buffers": self.queue.buffers.copy(),
         }
 
+    def close(self) -> None:
+        self.source.close()
+
 
 class PackChunkDataset(CheckpointableDataset):
     def __init__(

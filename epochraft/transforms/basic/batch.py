@@ -24,6 +24,9 @@ class BatchIterator(CheckpointableIterator):
     def state_dict(self) -> StateDict:
         return self.source.state_dict()
 
+    def close(self) -> None:
+        self.source.close()
+
 
 class BatchDataset(CheckpointableDataset):
     def __init__(

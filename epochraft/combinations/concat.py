@@ -30,6 +30,9 @@ class ConcatIterator(CheckpointableIterator):
             "source_index": self.source_index,
         }
 
+    def close(self) -> None:
+        self.source_iter.close()
+
 
 class ConcatDataset(CheckpointableDataset):
     def __init__(self, sources: Sequence[CheckpointableDataset]) -> None:

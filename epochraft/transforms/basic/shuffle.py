@@ -42,6 +42,9 @@ class ShuffleIterator(CheckpointableIterator):
             "rng": self.rng.getstate(),
         }
 
+    def close(self) -> None:
+        self.source.close()
+
 
 class ShuffleDataset(CheckpointableDataset):
     def __init__(self, source: CheckpointableDataset, buffer_size: int, seed: int) -> None:

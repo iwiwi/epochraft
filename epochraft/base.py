@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import abc
+from types import TracebackType
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -12,6 +13,7 @@ from typing import (
     Mapping,
     Optional,
     Sequence,
+    Type,
     Union,
 )
 
@@ -48,6 +50,21 @@ class CheckpointableIterator(abc.ABC):
     @abc.abstractmethod
     def state_dict(self) -> StateDict:
         raise NotImplementedError
+
+    @abc.abstractmethod
+    def close(self) -> None:
+        raise NotImplementedError
+
+    def __enter__(self) -> CheckpointableIterator:
+        return self
+
+    def __exit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_val: Optional[BaseException],
+        exc_tb: Optional[TracebackType],
+    ) -> None:
+        self.close()
 
 
 class CheckpointableDataset(torch.utils.data.IterableDataset, abc.ABC):

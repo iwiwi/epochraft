@@ -33,6 +33,9 @@ class ConcatChunkIterator(CheckpointableIterator):
             "buffers": self.queue.buffers.copy(),
         }
 
+    def close(self) -> None:
+        self.source.close()
+
 
 class ConcatChunkDataset(CheckpointableDataset):
     def __init__(
