@@ -106,12 +106,12 @@ def _generate_form_stream_cbor(
 
     try:
         while True:
-            sample = cbor2.load(stream)
+            sample = cbor2.load(stream)  # type: ignore
 
             if n_samples_to_skip > 0:
                 n_samples_to_skip -= 1
             else:
-                yield sample
+                yield sample  # type: ignore
     except EOFError:
         pass
 
