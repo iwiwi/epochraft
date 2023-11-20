@@ -34,7 +34,7 @@ from epochraft.transforms.language_modeling.tokenizer_utils import tensor_from_t
 def test_token_from_tensor_array_valid(
     token_array: TokenArray, expected_output: torch.LongTensor
 ) -> None:
-    assert torch.all(tensor_from_token_array(token_array) == expected_output)
+    assert torch.all(tensor_from_token_array(token_array) == expected_output)  # type: ignore
 
 
 @pytest.mark.parametrize(
