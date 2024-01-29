@@ -13,12 +13,10 @@ class ExampleSequence(Sequence[Sample]):
         self.called: defaultdict[int, int] = defaultdict(int)
 
     @overload
-    def __getitem__(self, index: int) -> Sample:
-        ...
+    def __getitem__(self, index: int) -> Sample: ...
 
     @overload
-    def __getitem__(self, s: slice) -> Sequence[Sample]:
-        ...
+    def __getitem__(self, s: slice) -> Sequence[Sample]: ...
 
     def __getitem__(self, index: Union[int, slice]) -> Union[Sample, Sequence[Sample]]:
         if isinstance(index, slice):
